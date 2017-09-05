@@ -1,0 +1,15 @@
+3.2.2
+Put a grocery list in the air jordan picture.
+put a nytimes article in the ironman pricture.
+stored 0101.jpg(castle gate) inside IMG_0713.jpg (snowy gazebo).
+insertrd sound file(crickets_1.wav) into 0103.jpg(staircase).
+
+***i assume adding information into a video would be the same process but i'll reseve untill i actually try this. if not you might need to ass information frame by frame.
+
+imbed more into each file.
+stored elephand noise into IMG_0713.JPG
+ironman nad air jordan are too short(smaill file) to store any of the images.
+stored the altered air jordan picture into the altered 0103.jpg
+
+3.2.2
+

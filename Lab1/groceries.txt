@@ -1,0 +1,8 @@
+Groceries:
+milk
+butter
+eggs
+chicken
+tomatoes
+taragon
+rice
