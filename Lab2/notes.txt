@@ -8,3 +8,7 @@ d=e^−1 mod(p−1)(q−1).
 factor N(the modulus of the RSA Key) into p and q and solve for d.
 
 //now i need to convert the Mod os key 1 and 2 from hex to regular integers...or atleast remove the dots.
+
+d = decrypted private key.
+e= exponent(stated in rsa key)
+p and q = gcd of the rsa keys mod.
