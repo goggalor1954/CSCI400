@@ -1,47 +1,83 @@
-#what i need to do
-# read in text from key a and b : done
-# format moduli so that it can be read by fastgcd. : done
-#output moduli to fastgcd : done
-# read in vunerable moduli and factors from fast gcd: done
-#compute the primes of up to 1024:done
-#compute the prime factors of the moduli(mutiply primes to get the moduli)
-#store these prime factors
-#find 2 distinct moduli whose share one prime factor but not the other:
-#im going to create an object for each moduli so that i can keep their primes straight.
-# ok, i can't figure out how to pass mutiple data to a class object right now. ill figure out in the morning.
-class mods:
- modulus=""
- primeFactors=[]
- def __init__(self, mod):
-  modulus=mod
- def __repr__(self):
-	return modulus
- 
+#####IMPORTANT#####
+#this program should be run from the directory lab-crypto1.
+# the fastgcd too must also have been extracted and installed in the lab-crypto/tools/fastgcd directory.
 
- 
-
-
+#this program reads the files Public-keyA.txt and Public-KeyB.txt and useing fastgcd determines their private keys.
 import os
+
+#searches for matching gcd's from public key A and B. indexes their location.
+def gcdCheck(gcdA, gdcB):
+ for i in range(len(gcdA)):
+  for j in range(len(gcdB)):
+   if(gcdA[i]==gcdB[j] and i!=j):
+    index=[]
+    index.append(i)
+    index.append(j)
+    return index
+
+#divides the indexed moduli by the indexd gcd's to get the value of q1 and q2
+def qFind(vulnerable_moduliA,vulnerable_moduliB, gcdA, gcdB, gcdIndex):
+ pValue=[]
+ pValue.append(int(vulnerable_moduliA[gcdIndex[0]],16)/int(gcdA[gcdIndex[0] ],16))
+ pValue.append(int(vulnerable_moduliB[gcdIndex[1]],16)/int(gcdB[gcdIndex[1]],16))
+ return pValue
+
+#given the p value, the q value and the public exponent, returns the private key decrypted private key.
+def getPrivateKey(qVal, pVal, publicExp, gcdIndex, indexSlot):
+ return ((int(publicExp,16)**-1)%(int(pVal[gcdIndex[indexSlot]], 16)-1)*qVal[indexSlot]-1)
+
+#assignes the value of the public Exponent
+def parsExp(contents):
+ publicExponent = ''.join(contents)
+ publicExponent = publicExponent.split("publicExponent:", 1)[1] #[0] returns left [1] returns right
+ publicExponent = publicExponent.split("(",1)[0]
+ publicExponent=publicExponent.replace(' ', '')
+ publicExponent='0x'+publicExponent
+ return publicExponent
+
+# returns a list of the parsed modulus values 
+def parsMods(contents):
+ mod=''.join(contents)
+ mod=mod.split("modulus:",1)[1]
+ mod=mod.split("publicExponent:", 1)[0]
+ mod=mod.replace(" ", '')
+ mod=mod.replace(":", '')
+ return mod
+
+#uses fastgcd to find the gcd's of vunerable moduli, passes those values as well as the moduli.
+def findGCD(gcds, mods, vulnerable_moduli):
+ textFile=open('mod.txt','w')
+ textFile.write(mods)
+ textFile.close()
+ os.system("tools/fastgcd/./fastgcd mod.txt")
+ os.system("rm mod.txt")
+ with open('vulnerable_moduli', 'rt') as inFile:
+ 	for line in inFile:
+		vulnerable_moduli.append('0x'+line) #read the mod in as hex
+ with open('gcds', 'rt') as inFile:
+	for line in inFile:
+		gcds.append('0x'+line.split('\n', 1)[0])
+os.system("rm vulnerable_moduli")
+os.system("rm gcds")
+
 
 vulnerable_moduliA=[]
 vulnerable_moduliB=[]
 gcdA=[]
 gcdB=[]
 contents =[]
-mod_A_Primes=[]
-mod_B_primes=[]
 
-#read in text from public key A
+
+#read in text from Public-KeyA
 with open('Public-KeyA.txt', 'rt') as inFile:
 	for line in inFile:
 		contents.append(line)
 
-#assignes moduli from public key a to modA
-modA=''.join(contents)
-modA=modA.split("modulus:",1)[1]
-modA=modA.split("publicExponent:", 1)[0]
-modA=modA.replace(" ", '')
-modA=modA.replace(":", '')
+#assigns the value of the exponent to publicExponentA
+publicExponentA=parsExp(contents)
+
+#assignes moduli from Public-KeyA to modA
+modA=parsMods(contents)
 
 #read in text from public key B
 contents=[]
@@ -49,66 +85,33 @@ with open('Public-KeyB.txt', 'rt') as inFile:
 	for line in inFile:
 		contents.append(line)
 
+#assigns the value of of exponent to publicExponentB
+publicExponentB=parsExp(contents)
+
+#if the publicExponents do not match, print statment and exit program.
+if publicExponentA != publicExponentB: 
+	print("These keys do not have the same exponent. Unable to find the private key.")
+	exit()
+
 #assignes moduli from public key B to modB
-modB=''.join(contents)
-modB=modB.split("modulus:",1)[1]
-modB=modB.split("publicExponent:", 1)[0]
-modB=modB.replace(" ", '')
-modB=modB.replace(":", '')
+modB=parsMods(contents)
 
-#generate gcd from Key A, read in vunerable mods and their gcd
-textFile=open('modA.txt','w')
-textFile.write(modA)
+
+#finds the gcds from Key A, then B, reads in vunerable mods and their gcds
+findGCD(gcdA, modA, vulnerable_moduliA)
+findGCD(gcdB, modB, vulnerable_moduliB)
+
+#searches for matching gcd's from public key A and B. indexes their location.
+gcdIndex = gcdCheck(gcdA, gcdB) 
+
+#divides the indexed moduli by the indexd gcd's to get the value of q1 and q2
+qValue = qFind(vulnerable_moduliA,vulnerable_moduliB, gcdA, gcdB, gcdIndex)
+
+textFile=open('PrivateKeys.txt','w')
+print( "The Private key for Public Key A is: " , str(getPrivateKey(qValue, gcdA, publicExponentA, gcdIndex, 0)))
+print( "The Private key for Public Key B is: " , str(getPrivateKey(qValue, gcdB, publicExponentB, gcdIndex, 1)))
+textFile.write( "The Private key for Public Key A is: " + str(getPrivateKey(qValue, gcdA, publicExponentA, gcdIndex, 0))+'\n')
+textFile.write( "The Private key for Public Key B is: " + str(getPrivateKey(qValue, gcdB, publicExponentB, gcdIndex, 1)))
 textFile.close()
-os.system("./fastgcd modA.txt")
-os.system("rm modA.txt")
-with open('vulnerable_moduli', 'rt') as inFile:
-	for line in inFile:
-		vulnerable_moduliA.append(mods(line))
-with open('gcds', 'rt') as inFile:
-	for line in inFile:
-		gcdA.append(line)
-os.system("rm vulnerable_moduli")
-os.system("rm gcds")
 
-#generate gcd from Key B, read in vunerable mods and their gcd
-textFile=open('modB.txt','w')
-textFile.write(modB)
-textFile.close()
-os.system("./fastgcd modB.txt")
-os.system("rm modB.txt")
-with open('vulnerable_moduli', 'rt') as inFile:
-	for line in inFile:
-		vulnerable_moduliB.append(mods(line))
-with open('gcds', 'rt') as inFile:
-	for line in inFile:
-		gcdB.append(line)
-os.system("rm vulnerable_moduli")
-os.system("rm gcds")
 
-#generate prime numbers for later use
-primes=[]
-for num in range(2,1024):  
-   if num > 1:  
-       for i in range(2,num):  
-           if (num % i) == 0:  
-               break  
-       else:  
-           primes.append(num)
-
-#test
-print(vulnerable_moduliA[0])
-
-#find prime factors
-for i in range(0, len(vulnerable_moduliA)):
- for j in range(0, len(primes)-1):
-  for k in range(j+1, len(primes)):
-   if primes[j]*primes[k]==vulnerable_moduliA[i].modulus:
-    vulnerable_moduliA[i].primeFactors.append(primes[j])
-    vulnerable_moduliA[i].primeFactors.append(primes[k])
-
-#test
-print("a")
-for i in range(0, len(vulnerable_moduliA[0].primeFactors)):
- print(vulnerable_moduliA[0].primeFactors[i])
-print("b")
