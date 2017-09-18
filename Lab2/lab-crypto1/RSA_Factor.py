@@ -4,6 +4,7 @@
 
 #this program reads the files Public-keyA.txt and Public-KeyB.txt and useing fastgcd determines their private keys.
 import os
+import struct
 
 #searches for matching gcd's from public key A and B. indexes their location.
 def gcdCheck(gcdA, gdcB):
@@ -60,6 +61,9 @@ def findGCD(gcds, mods, vulnerable_moduli):
 os.system("rm vulnerable_moduli")
 os.system("rm gcds")
 
+def float_to_hex(f): 
+ return hex(struct.unpack('<I',     struct.pack('<f', f))[0])
+
 
 vulnerable_moduliA=[]
 vulnerable_moduliB=[]
@@ -114,4 +118,5 @@ textFile.write( "The Private key for Public Key A is: " + str(getPrivateKey(qVal
 textFile.write( "The Private key for Public Key B is: " + str(getPrivateKey(qValue, gcdB, publicExponentB, gcdIndex, 1)))
 textFile.close()
 
+print(float_to_hex_(getPrivateKey(qValue, gcdA, publicExponentA, gcdIndex, 0)))
 
