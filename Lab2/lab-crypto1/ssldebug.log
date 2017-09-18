@@ -1,0 +1,7 @@
+Wireshark SSL debug log 
+
+Wireshark version: 2.4.1 (v2.4.1-0-gf42a0d2)
+GnuTLS version:    3.4.17
+Libgcrypt version: 1.7.7
+
+ssl_load_key: can't import pem data: ASN1 parser: Error in DER parsing.
