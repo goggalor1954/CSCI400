@@ -3,7 +3,9 @@
 # the fastgcd too must also have been extracted and installed in the lab-crypto/tools/fastgcd directory.
 
 #this program reads the files Public-keyA.txt and Public-KeyB.txt and useing fastgcd determines their private keys.
+
 import os
+import struct
 
 #searches for matching gcd's from public key A and B. indexes their location.
 def gcdCheck(gcdA, gdcB):
@@ -60,6 +62,17 @@ def findGCD(gcds, mods, vulnerable_moduli):
 os.system("rm vulnerable_moduli")
 os.system("rm gcds")
 
+#converts a hex value to a float
+def float_to_hex(f): 
+ return hex(struct.unpack('<I',     struct.pack('<f', f))[0])
+
+#creates a file containing a properly formated RSA Private key
+def getPrivateKeyFile(qVal, pVal, publicExponent, gcdIndex, indexSlot, fileName):
+ outFile=open(fileName, 'w')
+ outFile.write("-----BEGIN RSA PRIVATE KEY-----\n")
+ outFile.write(str(float_to_hex(getPrivateKey(qVal, pVal, publicExponent, gcdIndex, indexSlot)).split('0x', 1)[1])+'\n')
+ outFile.write("-----END RSA PRIVATE KEY-----\n")
+ outFile.close()
 
 vulnerable_moduliA=[]
 vulnerable_moduliB=[]
@@ -107,11 +120,6 @@ gcdIndex = gcdCheck(gcdA, gcdB)
 #divides the indexed moduli by the indexd gcd's to get the value of q1 and q2
 qValue = qFind(vulnerable_moduliA,vulnerable_moduliB, gcdA, gcdB, gcdIndex)
 
-textFile=open('PrivateKeys.txt','w')
-print( "The Private key for Public Key A is: " , str(getPrivateKey(qValue, gcdA, publicExponentA, gcdIndex, 0)))
-print( "The Private key for Public Key B is: " , str(getPrivateKey(qValue, gcdB, publicExponentB, gcdIndex, 1)))
-textFile.write( "The Private key for Public Key A is: " + str(getPrivateKey(qValue, gcdA, publicExponentA, gcdIndex, 0))+'\n')
-textFile.write( "The Private key for Public Key B is: " + str(getPrivateKey(qValue, gcdB, publicExponentB, gcdIndex, 1)))
-textFile.close()
-
+getPrivateKeyFile( qValue, gcdA, publicExponentA, gcdIndex, 0, 'PrivateKeyA.txt')
+getPrivateKeyFile( qValue, gcdB, publicExponentB, gcdIndex, 1, 'PrivateKeyB.txt')
 
