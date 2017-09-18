@@ -52,6 +52,7 @@ def getPrivateKey(qVal, pVal, publicExp, gcdIndex, indexSlot, vulnerable_moduli)
  t=(p-1)*(q-1)
  d=getInv(e, t)
  pk = RSA.construct((n, long(e), d, long(p), long(q)))
+ print("The prime factors used to generate this key were: "+str(p)+" and "+str(q))
  return pk
 
 #assignes the value of the public Exponent
