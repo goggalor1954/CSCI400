@@ -6,6 +6,8 @@
 
 import os
 import struct
+import rsa
+from Crypto.PublicKey import RSA
 
 #searches for matching gcd's from public key A and B. indexes their location.
 def gcdCheck(gcdA, gdcB):
@@ -24,9 +26,33 @@ def qFind(vulnerable_moduliA,vulnerable_moduliB, gcdA, gcdB, gcdIndex):
  pValue.append(int(vulnerable_moduliB[gcdIndex[1]],16)/int(gcdB[gcdIndex[1]],16))
  return pValue
 
-#given the p value, the q value and the public exponent, returns the private key decrypted private key.
-def getPrivateKey(qVal, pVal, publicExp, gcdIndex, indexSlot):
- return ((int(publicExp,16)**-1)%(int(pVal[gcdIndex[indexSlot]], 16)-1)*qVal[indexSlot]-1)
+#the extended euclidean algorithm.
+def extendedEucl(inA, inB):
+ if inA==0:
+  return(inB, 0, 1)
+ else:
+  x, y, z = extendedEucl(inB % inA, inA)
+  return(x, z - (inB//inA)*y, y)
+
+#returns the modular inverse
+def getInv(ex, mod):
+ gcd, a, b =extendedEucl(ex, mod)
+ if (gcd!=1):
+  return None
+ else:
+  return a%mod
+
+#given the p value, the q value, the vulnerable modulus and the public exponent, returns the private key decrypted private key.
+def getPrivateKey(qVal, pVal, publicExp, gcdIndex, indexSlot, vulnerable_moduli):
+ #inorder to bugcheck im going to break each of these into its own components
+ e= int(publicExp,16)
+ n= int(vulnerable_moduli[gcdIndex[indexSlot]].split('0x',1)[1],16)
+ p=int(pVal[gcdIndex[indexSlot]],16)
+ q=(qVal[indexSlot])
+ t=(p-1)*(q-1)
+ d=getInv(e, t)
+ pk = RSA.construct((n, long(e), d, long(p), long(q)))
+ return pk
 
 #assignes the value of the public Exponent
 def parsExp(contents):
@@ -62,17 +88,16 @@ def findGCD(gcds, mods, vulnerable_moduli):
 os.system("rm vulnerable_moduli")
 os.system("rm gcds")
 
-#converts a hex value to a float
-def float_to_hex(f): 
- return hex(struct.unpack('<I',     struct.pack('<f', f))[0])
+#converts a hex value to a double
+def double_to_hex(f): 
+ return hex(struct.unpack('<Q',struct.pack('<d', f))[0])
 
 #creates a file containing a properly formated RSA Private key
-def getPrivateKeyFile(qVal, pVal, publicExponent, gcdIndex, indexSlot, fileName):
+def getPrivateKeyFile(qVal, pVal, publicExponent, gcdIndex, indexSlot, fileName, vulnerable_moduli):
  outFile=open(fileName, 'w')
- outFile.write("-----BEGIN RSA PRIVATE KEY-----\n")
- outFile.write(str(float_to_hex(getPrivateKey(qVal, pVal, publicExponent, gcdIndex, indexSlot)).split('0x', 1)[1])+'\n')
- outFile.write("-----END RSA PRIVATE KEY-----\n")
+ pk=getPrivateKey(qVal, pVal, publicExponent, gcdIndex, indexSlot, vulnerable_moduli)
  outFile.close()
+
 
 vulnerable_moduliA=[]
 vulnerable_moduliB=[]
@@ -120,6 +145,6 @@ gcdIndex = gcdCheck(gcdA, gcdB)
 #divides the indexed moduli by the indexd gcd's to get the value of q1 and q2
 qValue = qFind(vulnerable_moduliA,vulnerable_moduliB, gcdA, gcdB, gcdIndex)
 
-getPrivateKeyFile( qValue, gcdA, publicExponentA, gcdIndex, 0, 'PrivateKeyA.txt')
-getPrivateKeyFile( qValue, gcdB, publicExponentB, gcdIndex, 1, 'PrivateKeyB.txt')
+getPrivateKeyFile( qValue, gcdA, publicExponentA, gcdIndex, 0, 'PrivateKeyA.txt', vulnerable_moduliA)
+getPrivateKeyFile( qValue, gcdB, publicExponentB, gcdIndex, 1, 'PrivateKeyB.txt', vulnerable_moduliB)
 
