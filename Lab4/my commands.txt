@@ -1,0 +1,50 @@
+echo "Starting 4.1.1..."
+
+echo "1. Create the admins directory"
+mkdir -pv /admins
+
+echo "2. Create the groups emp and wheel (see man groupadd)"
+groupadd -g 300 emp
+groupadd -g 400 wheel
+
+echo "3. Create the user accounts larry, moe, and curly using adduser"
+useradd larry --home-dir /home/larry --home-dir /home/larry -m -p larry
+useradd moe -d /home/moe -d /home/moe -m -p moe
+useradd curly -d /home/curly -d /home/curly -m -p curly
+
+echo "4. Add users to 'emp' group"
+usermod -a -G emp larry
+usermod -a -G emp moe
+usermod -a -G emp curly
+
+echo "5. Create admin users ken, dmr, and bwk"
+useradd ken --base-dir /admins/ken --home-dir /admins/ken -m -p ken
+useradd dmr -b /admins/dmr -d /admins/dmr -m -p dmr
+useradd bwk -b /admins/bwk -d /admins/bwk -m -p bwk
+
+echo "6. Add admin accounts to wheel group"
+usermod -a -G wheel ken
+usermod -a -G wheel dmr
+usermod -a -G wheel bwk
+
+echo "7. Add larry, bwk, and dmr to ken's group"
+usermod -a -G ken larry
+usermod -a -G ken bwk
+usermod -a -G ken dmr
+
+echo "8. Add moe, dmr, and ken to bwk's group"
+usermod -a -G bwk moe
+usermod -a -G bwk dmr
+usermod -a -G bwk ken
+
+echo "9. Add curly, ken, and bwk to dmr's group"
+usermod -a -G dmr curly
+usermod -a -G dmr ken
+usermod -a -G dmr bwk
+
+echo "10. Change /home dirs permissions"
+chmod 0750 /home/larry
+chmod 0750 /home/moe
+chmod 0750 /home/curly
+
+echo "11. set /home so normal users can't acces /home but can still access their home directories. members of /wheel still have full access"

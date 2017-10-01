@@ -1,0 +1,2095 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="robots" content="index,nofollow">
+    <title>CSCI 400 Cybersecurity Capstone - Access Control, Insiders,
+      and the Man in the Middle (September 27, 2017)</title>
+    <link rel="stylesheet" type="text/css" charset="utf-8" media="all"
+      href="common.css">
+    <link rel="stylesheet" type="text/css" charset="utf-8"
+      media="screen" href="screen.css">
+  </head>
+  <body dir="ltr" lang="en">
+    <div id="page" dir="ltr" lang="en">
+      <h1>CSCI 400 Security Lab: Access Control, Insiders, and the Man
+        in the Middle<br>
+      </h1>
+      <div class="author">
+        <h6>Based on exercises by Peter Peterson and Peter Reiher.</h6>
+        September 27, 2017<br>
+        <br>
+        This lab file contains background information for the lab
+        exercises.<br>
+      </div>
+      <h2>1. UNIX Permissions</h2>
+      <span class="anchor" id="posix"></span>
+      <p>The Portable Operating System Interface, or POSIX, is IEEE
+        standards family <strong>IEEE 1003.1</strong> and represents an
+        attempt to formalize the API for variants of the Unix operating
+        system. POSIX specifies standards for the kernel APIs (including
+        many internal functions like permissions, threads, networking,
+        and interprocess communication), commands, required utilities
+        and user-level APIs (including many utilities and scripting
+        tools like awk, echo, ed, sh, vi, basic I/O, and more), and a
+        conformance test that can be run on many platforms. POSIX is
+        very widely disseminated and has been in use for almost 20
+        years, but is a closed standard (i.e. proprietary). As a result,
+        it is expensive to be certified; this has resulted in many free
+        operating systems such as FreeBSD and Linux being substantially
+        compliant but not officially able to use the moniker "POSIX
+        Compliant". An alternative to POSIX is the <a class="http"
+          href="http://en.wikipedia.org/wiki/Single_UNIX_Specification">Single
+
+
+
+
+
+
+          UNIX Specification</a>, developed by the Austin Group.
+        Unfortunately, it is also proprietary and expensive. </p>
+      <p>The expense has not been prohibitive for motivated commercial
+        vendors however, and POSIX has been extremely influential in
+        coalescing and standardizing those elements that are
+        characteristically UNIX-like. Furthermore, POSIX is a standard
+        that influences software design and operating system
+        implementations in seemingly unlikely places -- for example,
+        Windows NT and its derivatives (2000, XP, and beyond) can be
+        "POSIX compliant" with the addition of software packages and the
+        enabling of certain features. This broad influence -- existing
+        before the public explosion of the Internet -- has helped to
+        make software and systems similar in fundamental ways. This, in
+        turn, simplifies many portability and interoperability problems.
+      </p>
+      <p>One of the enduring legacies of Bell Labs UNIX and the POSIX
+        standard are traditional Unix file system permissions, which are
+        a simple system of permissions stored in the file system and and
+        kernel and evaluated to mediate access to system resources.
+        Additionally, since devices are files in Unix, file system
+        permissions also mediate control over many aspects of the
+        operating system. </p>
+      <p>In most Unix and Unix-like operating systems, the permission
+        system is extremely simple. Each file has <tt>read</tt>, <tt>write</tt>,
+        and <tt>execute</tt> permissions set for each of three groups
+        of users called "access classes". The three classes are <tt>user</tt>
+        (owner), <tt>group</tt>, and <tt>other</tt>; each access class
+        represents one or more users in the following way: </p>
+      <ul>
+        <li>
+          <p>Users each have unique user identifiers (userids or UIDs,
+            listed in <tt>/etc/passwd</tt>) that only they control. </p>
+        </li>
+        <li>
+          <p>Groups are arbitrary collections of users. Each group has
+            its own group identifier (groupid or GID, defined in <tt>/etc/group</tt>).
+
+
+
+
+
+
+            Often, every user on the system has a personal group used
+            for sharing data with a limited set of other users. </p>
+          <ul>
+            <li>
+              <p>Example: the <tt>group</tt> class <tt>cdrom</tt>
+                usually contains a list of all users granted permission
+                to access the system's CD-rom drive. </p>
+            </li>
+            <li>
+              <p>Example: the user <tt>sonny</tt> has a group <tt>sonny</tt>
+                by default; the user <tt>cher</tt> can be added as a
+                member of group <tt>sonny</tt> so that they can share
+                resources between themselves but no one else. </p>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <p>Finally, the membership of the <tt>other</tt> class for
+            each file is dependent on the <tt>user</tt> and members of
+            the <tt>group</tt> class -- <strong>the</strong> <tt>other</tt>
+            <strong>class does not represent "all users!"</strong>
+            Specifically, the <tt>other</tt> class represents "everyone
+            that is <em>not</em> the <tt>user</tt> (owner) of the file
+            and <em>or</em> a member of the file's <tt>group</tt>
+            class." This fact allows us to express more meaningful
+            permissions by strictly dividing all system users into three
+            non-overlapping sets. </p>
+          <ul>
+            <li>
+              <p>A more precise way of stating this is to say that <tt>other</tt>
+                represents the the list of all users on the system,
+                minus the union of the <tt>user</tt> and <tt>group</tt>
+                classes. </p>
+            </li>
+            <li>
+              <p>Example: There are three users on a system: <tt>sonny</tt>,
+                <tt>cher</tt>, and <tt>donovan</tt>. <tt>sonny</tt>
+                owns a file whose group access class is set to the group
+                <tt>sonny</tt>, which contains the user <tt>cher</tt>.
+                The <tt>other</tt> class consists only of <tt>donovan</tt>,
+                because he is not the owner nor in the group <tt>sonny</tt>.
+              </p>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p>Each access class is encoded by 3 bits. Each bit present grants
+        an additional permission from the set <tt>read</tt>, <tt>write</tt>,
+        and <tt>execute</tt>. When you list files in long form (with
+        the option <tt>-l</tt>), you will see the permissions written
+        out in the leftmost column as a bitstring with the letters <tt>r</tt>,
+        <tt>w</tt>, and <tt>x</tt> in the order <tt>user</tt>, <tt>group</tt>,
+        and <tt>other</tt>: </p>
+      <p>Here's what it looks like "in the wild": </p>
+      <p> </p>
+      <pre>$ ls -alh
+-rw-r--r--   1 pahp console  18K May 16  2006 gpl.txt
+drwx------   5 pahp console  512 May 21  2006 john-1.7.2/
+lrwxrwxrwx   1 pahp console   25 Sep 13 20:45 labs -&gt; /proj/some/link/
+-rwxr--r--   1 pahp console  171 Sep  9 09:18 loadimage.sh*
+drwxrwxrwx   1 pahp console  512 Sep 13 20:45 worldwriteable/
+^ ^  ^  ^--- other permissions
+| |  '------- group permissions
+| '---------- user permissions
+'------------ file type: d=directory, l=symbolic link, - means regular file
+</pre>
+      <p>Here's an example bitstring split into components: </p>
+      <p> </p>
+      <pre>   d     rwx     rwx    rwx
+type    user    group  other
+</pre>
+      <p>In the above example, the owner of the file <tt>gpl.txt</tt>
+        has read and write permission because the <tt>owner</tt> part
+        of the bitstring is set to <tt>rw-</tt>. The owner (<tt>pahp</tt>)
+        cannot execute this file, but that doesn't matter because it's
+        just a text file. The group class <tt>console</tt> can read the
+        file, as can the members of the other class -- everyone else. </p>
+      <p>The directory <tt>john-1.7.2</tt> is only accessible by the
+        owner and nobody else. Notice the <tt>d</tt> in the first
+        place; this means that the file is a directory. </p>
+      <p>The file <tt>labs</tt> is a "<a class="http"
+          href="http://en.wikipedia.org/wiki/Symbolic_link">symbolic
+          link</a>" (sometimes called "soft link") to the directory <tt>/proj/some/link/</tt>.
+        Symbolic links are a special kind of file that is a pointer to a
+        disk location (a "pathname" which may or may not exist).
+        Permissions on symbolic links do not work as their <tt>lrwxrwxrwx</tt>
+        permissions might lead you believe. </p>
+      <p>In addition to the 9 bits required to store the <tt>user</tt>,
+        <tt>group</tt>, and <tt>other</tt> permissions of a file, there
+        are three kinds of "additional permissions" that are rarely used
+        but are extremely important to understand. The additional
+        permissions are known as the <em>setuid bit</em>, <em>setgid
+          bit</em>, and <em>sticky bit</em>. Each special bit has a
+        different function depending on where it is used: </p>
+      <p>When the the special bits are used on regular files: </p>
+      <ul>
+        <li>
+          <p>The setuid bit on an executable file means that the file
+            will run as the userid of the file's <em>owner</em> as
+            opposed to the userid of the user executing the file. This
+            is done to allow users to perform tasks that temporarily
+            require the user to be someone else, such as changing
+            passwords or restarting a service. Any program with the UID
+            bit set must be carefully written so as to block all misuse.
+            Innumerable vulnerabilities have stemmed from setuid <strong>root</strong>
+            programs with security holes that allowed users to execute
+            other commands as root. </p>
+        </li>
+        <li>
+          <p>The setgid bit on an executable file is like the setuid
+            bit, except that the process gains the effective user of the
+            file's <em>group</em>, not its owner or the user executing
+            the file. </p>
+        </li>
+        <li>The "sticky bit" was used in the olden days to tell the
+          kernel to keep an executable's image in memory so that it
+          would not have to be reloaded from disk. This was commonly
+          done with programs such as editors that were used regularly
+          but had a significant load time. Modern systems use the
+          "sticky bit" for other uses. </li>
+      </ul>
+      <p>When the special bits are used on directories, they have
+        different meanings altogether. Search online to discover what
+        those meanings are on Linux systems. </p>
+      <p>Every file has permissions of some kind set for the each of the
+        three classes, using the three types of basic permissions: <tt>read</tt>,
+        <tt>write</tt>, and <tt>execute</tt> (and the three special
+        bits). These permissions have a default value (based on the
+        system umask) when the file is created. Permissions can be
+        changed with command line utilities such as <tt>chmod</tt> and
+        <tt>chown</tt>, which are discussed <a
+          href="file.php?file=/share/shared/POSIXPermissions/index.html#permtools">later
+
+
+
+
+
+
+          in this document</a>. </p>
+      <p>These permissions are fairly self explanatory when applied to
+        files, but when applied to directories their meanings are <strong>not
+
+
+
+
+
+
+          always intuitive</strong>. In particular, permissions set on a
+        directory <strong>do not always apply to that directory's
+          contents</strong>, and the concepts of "read", "write", and
+        "execute" as they pertain to directories is not obvious. (It
+        helps to think of a directory as a file which contains links to
+        other files, rather than as a nested series of containers --
+        experiment on DETER to determine how they really interact!) </p>
+      <p>Furthermore, while the special bits are commonly overlooked,
+        they have important meanings with <strong>incredible
+          significance</strong> in terms of security. You are encouraged
+        to play with these permissions and read other materials in order
+        to fully understand how they are interpreted. </p>
+      <p><span class="anchor" id="criticisms"></span> </p>
+      <h3>Criticisms</h3>
+      <p>Traditional Unix permissions date back to the early 1970s.
+        While simple and inexpensive to implement and evaluate, they
+        have long been criticized for being out of date and woefully
+        inexpressive compared to the power of other access control
+        systems. Other systems (such as Microsoft Windows and other ACL
+        models for Unix) have more than three access groups, nested
+        groups, explicit deny lists, the ability to specify write
+        permissions for changing, creating, and deleting (with Unix
+        permissions they are largely the same), the ability to consider
+        arbitrary state in evaluating the ACLs (such as time of day,
+        network address, etc.), the ability to make files invisible to
+        unprivileged users, and many other features that traditional
+        Unix permissions lack. </p>
+      <p>Another important and oft-criticized fact is that Unix
+        permissions do not exactly reflect the current state of the
+        permissions configuration on the system. For example, while Unix
+        checks the file permissions at the moment a file is <em>opened</em>,
+        it only checks those permissions <em>once</em> for each <tt>open</tt>
+        system call. This means that the permissions are only tested
+        when you <em>first open the file for reading, writing, or
+          executing</em>, <strong>not</strong> each time you access or
+        modify the file's contents via an open file descriptor. If a
+        user opens a file, and immediately thereafter all permissions on
+        that file for that user are removed, the user with the open file
+        descriptor will <em>still</em> have access to the resource
+        according to the permissions set <em>when the file was opened</em>,
+        even if the <em>current</em> permissions deny reading, writing,
+        or execution. </p>
+      <p>Furthermore, the traditional Unix permissions and
+        authentication system assigns group membership and other
+        credentials at login time and <em>never</em> checks them again
+        -- this means that system password, login permission, group
+        membership details in <tt>/etc/group</tt> and other details
+        changed <em>after</em> you log in are <strong>not</strong>
+        reflected in your processes until you log out and log back in or
+        the process with those credentials is restarted. For example,
+        this means that any change to a user group is fully applied only
+        when all affected processes have been restarted. Another example
+        is that if an attacker steals a password and logs in to a system
+        before that account is disabled or the password is changed, the
+        attacker will still have that level of authentication until he
+        or she logs out. </p>
+      <div class="infobox">
+        <p> This is an example of a <i>time-of-check vs. time-of-use</i>
+          (TOCTOU) problem. </p>
+      </div>
+      <p>These design decisions were made to limit the space occupied by
+        and CPU cycles spent evaluating system permissions. As long as
+        the semantics of the system (including the above criticisms) are
+        fully understood, it can be an effective, acceptably secure
+        solution for many purposes. In fact, in some ways, its
+        simplicity and even naivete make it more transparent and easily
+        understandable when compared to more complex systems. For these
+        and many other reasons, the traditional Unix file permissions
+        are still in wide use, over 40 years after their initial
+        deployment. </p>
+      <p><span class="anchor" id="sudo"></span> </p>
+      <h3>sudo and Alternatives</h3>
+      <p>Some applications simply require stronger guarantees, finer
+        granularity, or other features that the traditional permissions
+        cannot express. For those applications, users have many
+        alternatives. <tt>sudo</tt> is one simple extension to
+        traditional Unix permissions that has become very popular. </p>
+      <p><strong>sudo</strong> is a setuid root application with its own
+        ACL (stored in <tt>/etc/sudoers</tt>) that specifies, with fine
+        granularity, tasks that users and groups can perform as root.
+        For example, sudo could be used to allow a user to act as root
+        in order to kill processes with a specific name. The user would
+        otherwise have no additional privileges. This is an example of a
+        perfect use for setuid root programs -- granting
+        strongly-constrained privileges to unprivileged users. </p>
+      <p>However, sudo is a double edged sword. On the one hand, it
+        greatly enhances the expressiveness of Unix permissions without
+        actually changing the permissions system. On the other hand, if
+        improperly configured, it offers <strong>easy access to root</strong>.
+        For more information on sudo and the sudoers ACL format, please
+        see the manpages for sudo and sudoers (the configuration file),
+        or other sudo-related material online (in particular regarding
+        sudo exploits). </p>
+      <p>Beyond sudo, two broader and more revolutionary alternatives
+        for Linux permissions include SELinux and grsecurity, while
+        other options exist including LDAP, Novell eDirectory, and other
+        permissions systems for other operating systems. (We won't be
+        using any of these.) <span class="anchor" id="permtools"></span>
+      </p>
+      <h3>Software Tools</h3>
+      <p> <span class="anchor" id="adduser"></span> </p>
+      <p> </p>
+      <h4>adduser, chfn, passwd: add users to a system</h4>
+      <p> <tt>adduser</tt> is the tool available for adding users to
+        the system. To create a new user, execute: </p>
+      <p> </p>
+      <pre>$ adduser username
+</pre>
+      <p> <tt>adduser</tt> will copy files from the <tt>/etc/skel</tt>
+        directory to become the new homedir of the new user in the <tt>/home/</tt>
+        directory. You can specify a different home directory or
+        automatically add the new user to groups; those options can be
+        found in the <tt>adduser</tt> manpage. </p>
+      <p> <tt>adduser</tt> does not set any <tt>finger</tt>
+        information for the user (this is not strictly necessary
+        anyway), but the tool <tt>chfn</tt> will do that: </p>
+      <p> </p>
+      <pre>$ sudo chfn jimbo
+Changing finger information for jimbo.
+Name []: ...
+</pre>
+      <p> By default, the user is created with a "locked out" account
+        with no password set. To set the password, use the command <tt>passwd</tt>:
+      </p>
+      <p> </p>
+      <pre>$ sudo passwd jimbo
+Changing password for user jimbo.
+New Unix password:
+Retype new Unix password:
+passwd: all authentication tokens updated successfully.
+</pre>
+      <p> <tt>passwd</tt> will complain if it doesn't like the password
+        you enter, but will accept anything with enough prodding. </p>
+      <p> Once an account is created, you can log into it in a number of
+        ways: </p>
+      <ol type="1">
+        <li>
+          <p> If logged in to the system where you created the account,
+            you can execute <tt>ssh&nbsp;newuser@localhost</tt> to
+            reconnect locally as the new user with the new password. </p>
+        </li>
+        <li>
+          <p> If local, you can also use the <tt>su</tt> command <tt>su&nbsp;newuser</tt>
+            to change to that user. This does not always update all
+            access credentials, however. This method can also be used to
+            become root by entering <tt>sudo&nbsp;su&nbsp;-</tt>. </p>
+        </li>
+        <li>
+          <p> If logged in to <tt>users.deterlab.net</tt>, you can ssh
+            to the node as the new user. </p>
+        </li>
+      </ol>
+      <p> <span class="anchor" id="addgroup"></span> </p>
+      <p> </p>
+      <h4>groupadd: add groups to a system</h4>
+      <p> <tt>groupadd</tt> adds a new group to the system with a
+        unique ID (by default). Example: </p>
+      <p> </p>
+      <pre>$ groupadd newgroup
+</pre>
+      <p> See <tt>man&nbsp;groupadd</tt> for more information. </p>
+      <p> <span class="anchor" id="usermod"></span> </p>
+      <p> </p>
+      <h4>usermod: modify a user</h4>
+      <p> <tt>usermod</tt> can be used to modify many details of a
+        preexisting user account. For more information, see <tt>man&nbsp;usermod</tt>.
+      </p>
+      <p> <span class="anchor" id="chown"></span> </p>
+      <p> </p>
+      <h4>chown, chgrp: change ownership of a file</h4>
+      <p> <tt>chown</tt> stands for <strong>ch</strong>ange <strong>own</strong>ership
+
+
+
+
+
+
+        and is (unsurprisingly) used to change the owner and group of a
+        file. </p>
+      <p> The syntax is very simple. To change the owner of a file,
+        execute: </p>
+      <p> </p>
+      <pre>$ chown newowner filename
+</pre>
+      <p> To change the owner and group classes of a file, execute: </p>
+      <p> </p>
+      <pre>$ chown newowner:newgroup filename
+</pre>
+      <p> <tt>chgrp</tt> stands for <strong>ch</strong>ange <strong>gr</strong>ou<strong>p</strong>
+        and works very similarly to <tt>chown</tt>. To change the group
+        of a file, execute: </p>
+      <p> </p>
+      <pre>$ chgrp newgroup filename
+</pre>
+      <p> Recursive and other options exist; see <tt>man&nbsp;chown</tt>
+        or <tt>man&nbsp;chgrp</tt> for more information. </p>
+      <p> <span class="anchor" id="chmod"></span> </p>
+      <p> </p>
+      <h4>chmod: change the mode of a file</h4>
+      <p> chmod stands for <strong>ch</strong>ange <strong>mod</strong>e
+        and is used to change the permissions mode of a file. Earlier,
+        we discussed how the POSIX ACL has three access classes. User
+        (or owner), group, and other (or world). The permissions mode
+        for each access class can be changed by the <tt g="">chmod</tt>
+        command. </p>
+      <p> There are two ways to use <tt>chmod</tt>; one is an <em>absolute
+
+
+
+
+
+
+          numeric mode</em> and the other is a <em>symbolic mode</em>.
+      </p>
+      <p> </p>
+      <h5>chmod: absolute -- setting the permissions explicitly</h5>
+      <p> In the absolute mode, <tt>chmod</tt> takes a file mode in 3
+        or 4 digits, each of which represents the absolute permission
+        mode for one access class expressed in octal, where each number
+        is a sum of the permission bits. Each permission has a unique
+        value: <tt g="">read</tt> permission is <tt class="backtick">4</tt>,
+        <tt class="backtick">write</tt> permission is <tt
+          class="backtick">2</tt>, and <tt class="backtick">execute</tt>
+        permission is <tt class="backtick">1</tt>. These values
+        represent the position of the permission in a 3-bit value. </p>
+      <p> For example, the mode <tt g="">777</tt> means "full
+        permissions" because all bits are set in each access class.
+        Similarly, <tt class="backtick">000</tt> means "no permissions"
+        because all bits are unset in each access class. </p>
+      <p> The 3-digit mode <tt g="">777</tt> is the equivalent to the
+        4-digit mode <tt class="backtick">0777</tt> where the leading <tt
+          class="backtick">0</tt> represents the "special" permission
+        class of setuid, setgid, and sticky. Likewise, the modes <tt
+          class="backtick">000</tt> and <tt class="backtick">0000</tt>
+        are equivalent and represent the absence of permission. (The
+        owner of the file and root still have the ability to change the
+        file's mode by virtue of their ownership and superuser status.)
+        Finally, if the 3-digit mode is used, <tt class="backtick">chmod</tt>
+        always assumes that the special access class is <tt
+          class="backtick">0</tt>. Therefore, if you set an suid-root
+        file to mode <tt class="backtick">777</tt>, <tt
+          class="backtick">chmod</tt> assumes that you meant mode <tt
+          class="backtick">0777</tt>, which would take away the special
+        permissions. This is consistent if you remember that octal modes
+        represent <em>absolute permissions</em> and <em>the special
+          group class is assumed to be <tt class="backtick">0</tt> if a
+          3-digit mode is provided.</em> </p>
+      <p> The following is a table to help calculate permission modes: </p>
+      <div>
+        <table style="width: 200px">
+          <tbody>
+            <tr>
+              <td colspan="12" style="text-align: center;">
+                <p> <strong>chmod absolute values</strong> </p>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="3" style="text-align: center;">
+                <p> special<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> user<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> group<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> other<em> </em> </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p> <strong>s</strong> </p>
+              </td>
+              <td>
+                <p> <strong>g</strong> </p>
+              </td>
+              <td>
+                <p> <strong>t</strong> </p>
+              </td>
+              <td>
+                <p> <strong>r</strong> </p>
+              </td>
+              <td>
+                <p> <strong>w</strong> </p>
+              </td>
+              <td>
+                <p> <strong>x</strong> </p>
+              </td>
+              <td>
+                <p> <strong>r</strong> </p>
+              </td>
+              <td>
+                <p> <strong>w</strong> </p>
+              </td>
+              <td>
+                <p> <strong>x</strong> </p>
+              </td>
+              <td>
+                <p> <strong>r</strong> </p>
+              </td>
+              <td>
+                <p> <strong>w</strong> </p>
+              </td>
+              <td>
+                <p> <strong>x</strong> </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p> 4 </p>
+              </td>
+              <td>
+                <p> 2 </p>
+              </td>
+              <td>
+                <p> 1 </p>
+              </td>
+              <td>
+                <p> 4 </p>
+              </td>
+              <td>
+                <p> 2 </p>
+              </td>
+              <td>
+                <p> 1 </p>
+              </td>
+              <td>
+                <p> 4 </p>
+              </td>
+              <td>
+                <p> 2 </p>
+              </td>
+              <td>
+                <p> 1 </p>
+              </td>
+              <td>
+                <p> 4 </p>
+              </td>
+              <td>
+                <p> 2 </p>
+              </td>
+              <td>
+                <p> 1 </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p> For example, full access is <tt g="">0777</tt>, which
+        represents: </p>
+      <div>
+        <table>
+          <tbody>
+            <tr>
+              <td colspan="3" style="text-align: center;">
+                <p> special<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> user<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> group<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> other<em> </em> </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p> <strong>s</strong> </p>
+              </td>
+              <td>
+                <p> <strong>g</strong> </p>
+              </td>
+              <td>
+                <p> <strong>t</strong> </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> <strong>r</strong> </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> <strong>w</strong> </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> <strong>x</strong> </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> <strong>r</strong> </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> <strong>w</strong> </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> <strong>x</strong> </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> <strong>r</strong> </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> <strong>w</strong> </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> <strong>x</strong> </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p> 4 </p>
+              </td>
+              <td>
+                <p> 2 </p>
+              </td>
+              <td>
+                <p> 1 </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> 4 </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> 2 </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> 1 </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> 4 </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> 2 </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> 1 </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> 4 </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> 2 </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> 1 </p>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="3" style="text-align: center;">
+                <p> 0 </p>
+              </td>
+              <td colspan="3" style="text-align: center; ;
+                background-color: #ff8080">
+                <p> <strong>7</strong> </p>
+              </td>
+              <td colspan="3" style="text-align: center; ;
+                background-color: #80ff80">
+                <p> <strong>7</strong> </p>
+              </td>
+              <td colspan="3" style="text-align: center; ;
+                background-color: #8080ff">
+                <p> <strong>7</strong> </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p> There are no special bits set, so the <tt g="">special</tt>
+        octal digit is <tt class="backtick">0</tt>, while all three
+        bits in each other class are set. Each set of bits totals 7 (4 +
+        2 + 1), so the mode is <tt class="backtick">0777</tt>. </p>
+      <p> Another example is mode <tt g="">2755</tt>, which represents
+        <tt class="backtick">setgid</tt> (2), plus "full access" for <tt
+          class="backtick">user</tt> (4 + 2 + 1) and <tt
+          class="backtick">write</tt> and <tt class="backtick">execute</tt>
+        (4 + 1) access for both the <tt class="backtick">group</tt> and
+        <tt class="backtick">other</tt> class. </p>
+      <div>
+        <table>
+          <tbody>
+            <tr>
+              <td colspan="3" style="text-align: center;">
+                <p> special<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> user<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> group<em> </em> </p>
+              </td>
+              <td colspan="3" style="text-align: center;">
+                <p> other<em> </em> </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p> <strong>s</strong> </p>
+              </td>
+              <td style="background-color: #808080">
+                <p> <strong>g</strong> </p>
+              </td>
+              <td>
+                <p> <strong>t</strong> </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> <strong>r</strong> </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> <strong>w</strong> </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> <strong>x</strong> </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> <strong>r</strong> </p>
+              </td>
+              <td>
+                <p> <strong>w</strong> </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> <strong>x</strong> </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> <strong>r</strong> </p>
+              </td>
+              <td>
+                <p> <strong>w</strong> </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> <strong>x</strong> </p>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p> 4 </p>
+              </td>
+              <td style="background-color: #808080">
+                <p> 2 </p>
+              </td>
+              <td>
+                <p> 1 </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> 4 </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> 2 </p>
+              </td>
+              <td style="background-color: #ff8080">
+                <p> 1 </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> 4 </p>
+              </td>
+              <td>
+                <p> 2 </p>
+              </td>
+              <td style="background-color: #80ff80">
+                <p> 1 </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> 4 </p>
+              </td>
+              <td>
+                <p> 2 </p>
+              </td>
+              <td style="background-color: #8080ff">
+                <p> 1 </p>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="3" style="text-align: center; ;
+                background-color: #808080">
+                <p> <strong>2</strong> </p>
+              </td>
+              <td colspan="3" style="text-align: center; ;
+                background-color: #ff8080">
+                <p> <strong>7</strong> </p>
+              </td>
+              <td colspan="3" style="text-align: center; ;
+                background-color: #80ff80">
+                <p> <strong>5</strong> </p>
+              </td>
+              <td colspan="3" style="text-align: center; ;
+                background-color: #8080ff">
+                <p> <strong>5</strong> </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p> Absolute modes are applied like this: </p>
+      <p> </p>
+      <pre>$ chmod 0755 somefile.sh
+</pre>
+      <p> Absolute mode is great for setting things to be exactly what
+        you want, or imposing a radically different order onto a file or
+        directory, but it's not very good for adding the sticky bit to a
+        file. For that kind of work (or if the octal modes just confuse
+        you) the symbolic mode is well suited. </p>
+      <p> </p>
+      <h5>chmod: symbolic -- more user-friendly</h5>
+      <p> The symbolic mode works pretty much the way you would expect.
+        To add the <tt g="">execute</tt> bit to the <tt
+          class="backtick">user</tt> class, you would execute a command
+        like this: </p>
+      <p> </p>
+      <pre>$ chmod u+x somefile.sh
+</pre>
+      <p> Or to add <tt g="">execute</tt> to all three classes: </p>
+      <p> </p>
+      <pre>$ chmod ugo+x somefile.sh
+</pre>
+      <p> To make a file <tt g="">setuid</tt>: </p>
+      <p> </p>
+      <pre>$ chmod u+s somefile.sh
+</pre>
+      <p> To remove all permissions: </p>
+      <p> </p>
+      <pre>$ chmod ugo-rwxsgt somefile.sh
+</pre>
+      <p> Some people are so put off by the absolute mode that they
+        never learn it -- you'll find with experience that both methods
+        of setting permissions can be expeditious depending on the
+        situation. More information is available in the <tt g="">chmod</tt>
+        manpage. </p>
+      <p> Regardless of how you set permissions, it is critical that you
+        use the "principle of least privilege" and only grant the
+        privileges that are necessary for proper operation. <span
+          class="anchor" id="intro"></span> </p>
+      <h3>Tips and Tricks</h3>
+      <div class="level3">
+        <div class="level3"> <br>
+          <div class="level3"> This section includes important rules and
+            tips for making sure that your answers are correct.
+            <p> <span class="anchor" id="ambiguity"></span> </p>
+            <h4>1. Rules for resolving filesystem permission
+              ambiguities:</h4>
+            <p>Permissions should <em>always</em> be set to reflect the
+              <strong>least privilege</strong> required to fulfill the
+              requirements. In POSIX permissions, every bit set
+              represents <em>less security</em>, so we want to set as
+              few bits as possible. Resolve any ambiguities with this
+              cumulative list of guidelines: </p>
+            <ol type="1">
+              <li>
+                <p>Files you are instructed to create are to be owned by
+                  <tt>root</tt> unless otherwise specified. Doing the
+                  work as <tt>root</tt> should do this automatically.
+                  (You can become root by executing <tt>sudo&nbsp;su&nbsp;-</tt>.)
+
+
+
+
+
+
+                </p>
+                <ul>
+                  <li>Exception: Files in homedirs should be owned by
+                    the homedir owner (useradd should do this by default
+                    for boilerplate files like .bash_login, etc). </li>
+                </ul>
+              </li>
+              <li>When setting ownership of a file, set the group class
+                to the same thing as the user (owner) class unless
+                otherwise specified.
+                <ul>
+                  <li>
+                    <p>Example: Create the directory <tt>foo</tt>. Set
+                      <tt>www-data</tt> as the owner of <tt>foo</tt>. </p>
+                  </li>
+                  <li>
+                    <p>Answer: Set <tt>www-data</tt> to be the user
+                      (owner) and group class of <tt>foo</tt>. </p>
+                  </li>
+                  <li>
+                    <p>Example: Create the directory <tt>xyzzy</tt>.
+                      Set the group class to <tt>www-data</tt>. </p>
+                  </li>
+                  <li>
+                    <p>Answer: Set the group class to <tt>www-data</tt>
+                      but the user class should still be set to <tt>root</tt>.
+                    </p>
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <p>Files whose permissions you are <em>not</em>
+                  otherwise instructed to change should stay at their
+                  default. </p>
+                <ul>
+                  <li>
+                    <p>Example: Create directory <tt>baz</tt>. Create
+                      directory <tt>quux</tt> and set its permissions
+                      to be wide open. </p>
+                  </li>
+                  <li>
+                    <p>Answer: Don't change <tt>baz</tt>'s file mode.
+                      It should be owned by root (as per #1). Set <tt>quux</tt>
+                      permissions to <tt>0777</tt>. </p>
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <p>For any files whose permissions you <em>are</em>
+                  instructed to change, unspecified permissions are <strong>always</strong>
+                  assumed to be 0 (no access). In other words,
+                  instructions for setting file permissions implicitly
+                  include all access groups (even those not explicitly
+                  mentioned). </p>
+                <ul>
+                  <li>
+                    <p>Example: Set directory <tt>foo</tt> so that its
+                      owner has full access. </p>
+                  </li>
+                  <li>
+                    <p>Answer: The correct mode is <tt>0700</tt>, since
+                      no group or other permissions were specified and
+                      we assume that they are 0. </p>
+                  </li>
+                </ul>
+              </li>
+              <li>Permissions are assumed to be for all classes unless
+                specified.
+                <ul>
+                  <li>
+                    <p>Example: Remove all permissions from <tt>/dev/hdc</tt>.
+                    </p>
+                  </li>
+                  <li>
+                    <p>Answer: Set <tt>/dev/hdc</tt> to mode <tt>000</tt>
+                      (root still has access of course). </p>
+                  </li>
+                  <li>
+                    <p>Example: Set read and write permissions on <tt>/etc/motd</tt>.
+                    </p>
+                  </li>
+                  <li>
+                    <p>Answer: <tt>/etc/motd</tt> should be set to mode
+                      0666 -- all classes can read and write. </p>
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <p>When granting permissions, setuid, setgid, and sticky
+                  bits are <strong>never</strong> granted unless
+                  specifically required to solve the problem. These bits
+                  are special and must be required by the nature of the
+                  question or be otherwise mentioned to be granted. </p>
+                <ul>
+                  <li>Example: Set a directory so that owner has full
+                    access and it's group class members can create files
+                    in it. </li>
+                  <li>
+                    <p>Answer: The correct mode is <tt>0730</tt>
+                      because a user (in this case the group user)
+                      requires both write and execute to create files.
+                      The question didn't specify anything requiring
+                      setuid or setgid so they are not enabled. </p>
+                  </li>
+                  <li>
+                    <p>Note: the <tt>other</tt> class in this example
+                      has no access because the permission is assumed to
+                      be <tt>0</tt> (as per #4). </p>
+                  </li>
+                  <li>
+                    <p>Note: In #3 above, see that "wide open" for the
+                      directory quux meant <tt>0777</tt> <strong>not</strong>
+                      <tt>4777</tt> because setuid was not specified or
+                      required. </p>
+                  </li>
+                </ul>
+              </li>
+              <li>If any tasks are not possible with the standard POSIX
+                permissions available in this exercise, explain why. </li>
+            </ol>
+            <p><br>
+            </p>
+            <h2>2. Insider and Man-in-the-Middle Attacks</h2>
+            <p>
+              <meta http-equiv="content-type" content="text/html;
+                charset=UTF-8">
+            </p>
+            <p> "Man-in-the-middle" is a term used in cryptography to
+              describe scenarios where an attacker (the eponymous "man
+              in the middle") between two remote parties can view or
+              control data that would otherwise be secure.
+              "Man-in-the-middle attack" usually refers to
+              vulnerabilities in a key-exchange protocol whereby an
+              attacker can subvert the encryption (typically by
+              substituting secure keys with insecure keys) and gain
+              access to the cleartext without the victims' knowledge.
+              Man-in-the-middle attacks are possible due to
+              characteristics of common networking protocols that make
+              eavesdropping and other "insecure" activities possible. </p>
+            <p> <span class="anchor" id="dsniff"> </span></p>
+            <h3>Sniffing Ethernet</h3>
+            <p> Ethernet is by far the most common data link (or "layer
+              2") protocol in typical LANs. Ethernets work by passing
+              "frames" (analogus to what TCP/IP calls "packets") on a
+              shared medium according to an algorithm that attempts to
+              be fair. While TCP/IP packets are addressed by port and IP
+              address, Ethernet packets are addressed by a MAC (<a
+                class="http"
+                href="http://en.wikipedia.org/wiki/Media_Access_Control">Media
+
+
+
+
+
+
+                Access Control</a>) address. Every Ethernet card has a
+              unique, manufacturer-assigned MAC address (although this
+              can often be changed in software) that is included in the
+              header of an Ethernet frame. This address allows Ethernet
+              frames to be addressed to and recognized by the interface
+              that is meant to receive it. </p>
+            <p> <span class="anchor" id="dhub"></span> </p>
+            <h4>Shared Medium</h4>
+            <p> Due to the broadcast nature of Ethernet, there is <em>nothing</em>
+              stopping one interface from "hearing" a packet destined
+              for another host on the same network segment or medium
+              (colloquially called "the wire"). However, Ethernet
+              hardware is typically configured to ignore <em>at the
+                hardware level</em> any frames that do not match its MAC
+              address. This ignorance is <em>by convention only</em>
+              and serves two purposes; it reduces the amount of data an
+              interface is required to process, and it provides a small
+              amount of "soft security" through voluntary behavior since
+              end users do not normally have direct access to the
+              Ethernet hardware. </p>
+            <p> However, most (if not all) Ethernet interfaces are
+              perfectly capable of receiving and decoding all Ethernet
+              frames on the wire. This usually requires putting the
+              interface into so-called promiscuous mode, which passes <em>all</em>
+              Ethernet frames on the network segment to the operating
+              system. </p>
+            <p> Even though most network traffic these days uses TCP/IP
+              or UDP/IP, those packets are still encapsulated in
+              Ethernet frames for transport on the local network
+              segment. This means that if an interface is in promiscuous
+              mode, then all traffic on the segment -- including TCP and
+              UDP -- can also be decoded. </p>
+            <p> Older network infrastructure hardware used a fully
+              "shared media" paradigm; these network devices are called
+              Ethernet hubs. An Ethernet hub is essentially a physical
+              layer (layer 1 in the OSI model) repeater that broadcasts
+              every inbound packet out on every port but the one that
+              received the packet. This means that logically, all
+              computers connected via a hub are sharing a single
+              "network segment" as if they were connected to the same
+              physical wires. </p>
+            <p> This method is simple and cheap, because it
+              fundamentally requires very little hardware which was
+              important in the early days of computer networks. However,
+              this design has two significant drawbacks due to the fact
+              that it broadcasts data to places that do not need it.
+              First, it creates a scaling issue because hubs use more
+              bandwidth than is necessary since traffic is broadcast on
+              wires where it is not needed. This causes unnecessary
+              packet collisions and directly limits the size of a hub
+              network due to link saturation. Second, (and more
+              importantly for the purposes of a security class) hub
+              networks send data to interfaces that are not meant to be
+              recipients of the data. While this is technically "correct
+              behavior," it enables data compromise. Incidentally,
+              802.11 wireless Ethernet networks are extremely similar to
+              Ethernet hub networks, precisely because all hosts share
+              the same "medium" -- the radio waves within proximity of
+              the access point. </p>
+            <p> This means that a computer connected to a hub or
+              wireless network, using an interface in promiscuous mode,
+              can listen to <em>all</em> traffic to and from any host
+              connected to the same network segment. Because of all the
+              above considerations, most wired Ethernets today have
+              eliminated hubs for a faster and more efficient device,
+              the switch. </p>
+            <p> <span class="anchor" id="dswitch"></span> </p>
+            <h4>Switched Networks</h4>
+            <p> An Ethernet switch requires a certain amount of memory
+              and a microcontroller because it is a link layer device
+              and must understand certain elements of the Ethernet
+              protocol. In particular, a <em>switch</em> keeps track of
+              which MAC addresses are present on each of its ports. When
+              an Ethernet frame comes into a switch, the switch extracts
+              the destination MAC address from the frame header, and
+              checks to see if it knows which port that MAC address is
+              on. If the switch thinks it knows what port the receiver
+              is on, it sends the frame out on that port only. If it
+              doesn't know what port that MAC is on, it sends the frame
+              out on all ports, in the hopes that a host will receive it
+              and respond, at which point the switch will know where the
+              new MAC address is located. </p>
+            <p> The "intelligent" nature of a switch (versus a hub)
+              addresses the scaling issues of hubs by transmitting data
+              on as few network segments as possible. This means that
+              compared to a hub, an interface on a switch typically has
+              much less traffic on its network segment. Where a host on
+              a hub could see all traffic, because the hub acts as a
+              single shared medium, a host on a dedicated switch port
+              (even in promiscuous mode) typically sees only traffic
+              that it sends or receives as though it were on its own
+              network segment. </p>
+            <p> Security researchers have developed several attacks
+              against switched networks with the intent to increase the
+              amount of traffic that an interface can see -- in effect,
+              to make a switch act more like a hub for the purposes of
+              eavesdropping. One early attack was based on the fact that
+              many switches will "fail over" into a "hub mode" when
+              overloaded. Fortunately, it is harder to force a switch to
+              fail over today than it used to be. This technique is also
+              conspicuous because of the large amounts of bogus traffic
+              it generates. </p>
+            <p> Unfortunately, there is another technique that is almost
+              impossible to defend against. </p>
+            <p> <span class="anchor" id="darp"></span> </p>
+            <h3>ARP Spoofing</h3>
+            <p> ARP Spoofing is a technique for redirecting traffic that
+              can allow an arbitrary interface on an otherwise unsecured
+              switched network to receive traffic that would not
+              normally be sent to it. </p>
+            <p> The <a class="http"
+                href="http://en.wikipedia.org/wiki/Address_resolution_protocol">Address
+
+
+
+
+
+
+                Resolution Protocol</a>, or ARP, is used to to resolve a
+              network layer address (e.g., IP address) to a link layer
+              address (e.g., MAC address). When a host wishes to send a
+              TCP/IP packet to a remote host, it first creates the
+              TCP/IP packet. However, the hardware in the network
+              interface must encapsulate the packet in a link layer
+              frame (commonly Ethernet) before sending the data out on
+              the wire. In order to assign the frame to the correct
+              destination address, the local host must use ARP to
+              determine which hardware address corresponds to the IP
+              address in question. This involves sending special ARP
+              messages called <em>ARP Requests</em> on the local
+              Ethernet and receiving replies from hosts that have the
+              answer. </p>
+            <p> For example, the host <tt>10.10.10.20</tt> needs to
+              send data to the Internet. In order to reach the Internet,
+              it must send the data through its default gateway, which
+              is configured with IP address <tt>10.10.10.10</tt>. The
+              sending host <tt>10.10.10.20</tt> needs to know what
+              Ethernet address <tt>10.10.10.10</tt> has in order to put
+              the correct MAC address in the frame header. In order to
+              discover this, <tt>10.10.10.20</tt> needs to broadcast an
+              ARP request to all Ethernet nodes: </p>
+            <p> </p>
+            <pre>arp who-has 10.10.10.10 tell 10.10.10.20
+
+
+</pre>
+            <p> ... Hopefully, 10.10.10.20 will receive a reply like: </p>
+            <p> </p>
+            <pre>arp reply 10.10.10.10 is-at 2e:2f:30:31:32:33
+
+</pre>
+            <p> ... from some host that knows the answer. Host
+              10.10.10.20 will update its ARP tables associating the IP
+              10.10.10.10 with the MAC address 2e:2f:30:31:32:33 and
+              won't ask again for some time. </p>
+            <p> ARP Spoofing relies on the decentralized,
+              unauthenticated, and completely trusting nature of ARP to
+              succeed. In ARP Spoofing, the attacker (or spoofer) tells
+              specific hosts or entire networks that <em>its MAC
+                address</em> should be associated with the victim's IP
+              address, rather than the correct MAC to IP mapping. This
+              is commonly used to tell network hosts that an <em>attacker</em>
+              is the default gateway instead of the real default
+              gateway. The spoofer keeps the victim's <em>real</em> MAC
+              address in its ARP table, and prepares to receive data
+              from network hosts. </p>
+            <p> When an attacker pretends to be the default gateway for
+              a network, all hosts that received the bogus ARP messages
+              now believe that the <em>spoofer's</em> MAC should be
+              inserted into any Ethernet frame destined for the Internet
+              or another IP subnet instead of the real default gateway's
+              MAC address. <strong>This is especially meaningful</strong>
+              because Ethernet switches <em>build their own ARP tables</em>
+              in order to efficiently direct traffic and avoid
+              broadcasting like a hub. This means that <em>Ethernet
+                switches will be fooled in addition to the remote hosts</em>.
+              As a result, switches will direct default gateway-bound
+              traffic to the <em>spoofer</em>, not the <strong>real</strong>
+              default gateway. Furthermore, a spoofing host that wishes
+              to remain undetected can <em>rewrite and forward the
+                Ethernet frames to the real default gateway</em>. This
+              method silently maintains the victim's connections while
+              routing them conveniently under the nose of the sniffer.
+              In this way, ARP Spoofing acts as a kind of network
+              reconfiguration at the data link layer and highlights
+              Ethernet's dependence on ARP. </p>
+            <p> At this point, the spoofing host has almost total
+              control of the network traffic and can see and sniff
+              arbitrary hosts' data with the use of a promiscuous
+              interface and packet sniffing software. ARP Spoofing does
+              slow down network traffic because of the additional hops
+              and procesessing involved, but the clever attacker will
+              target only the hosts she wants to affect, rather than the
+              whole network. ARP Spoofing also requires multiple
+              spoofing actions to maintain the tables in their bogus
+              state, but this is not a difficult burden to bear.
+              Furthermore, the careful spoofer can restore the ARP
+              tables of the network before quitting, resulting in
+              minimal network disruption due to the spoofing. </p>
+            <p> While there are strategies against ARP Spoofing, notably
+              ARP monitoring, fixed ARP tables and <a class="http"
+                href="http://en.wikipedia.org/wiki/VLAN">VLAN</a>s,
+              these are expensive in terms of maintenance, network
+              design, and may require specialized hardware. Because of
+              this, most networks in use today are at least partially
+              vulnerable to ARP Spoofing attacks. </p>
+            <p> Being the "man in the middle" gives you the opportunity
+              to perform several different kinds of network attacks.
+              Each type of attack can be executed in many different ways
+              with many different goals; the following is just a brief
+              overview. <span class="anchor" id="deaves"> </span></p>
+            <h3>Eavesdropping</h3>
+            <p> Eavesdropping generically refers to intentionally
+              listening to a private conversation. In the context of
+              computer networks, this is often called <em>sniffing</em>,
+              and involves receiving and decoding network packets on
+              your network segment that are not sent by or meant to be
+              received by your host. </p>
+            <p> The usefulness of sniffing is immediately obvious when
+              the data is being passed in plain text, because any
+              "cleartext" data sniffed is data that can be immediately
+              read. Usernames and passwords are often easy to extract
+              with a little protocol knowledge or an ASCII decoding of
+              the network data. </p>
+            <p> In the old days, almost no network traffic was encrypted
+              because it required more memory and CPU power, which were
+              both considered too valuable when compared against the
+              likelihood of meaningful losses caused by a sniffing
+              attack. As a result, the TELNET remote shell program
+              remained popular into the late 1990s even though all data
+              and authentication information were sent in cleartext. </p>
+            <p> Nowadays however, sniffing is one of the most common and
+              easiest attacks to execute due to the proliferation of
+              computer networks, free user-friendly sniffing tools and
+              especially wireless LANs where sniffing requires only
+              proximity and a laptop. Most web traffic is unencrypted,
+              along with many other protocols such as SMTP and IMAP
+              (email). Most remote shell traffic is now encrypted due to
+              the tremendous risk in sending system authentication
+              information unencrypted, but often SMTP, IMAP, or web
+              forum passwords are still unencrypted and may often be the
+              same as more sensitive system passwords. (For example,
+              John's unencrypted webmail password may be the same as his
+              login password on the same system, even though the system
+              uses SSH for logins.) Additionally, while TELNET is not
+              often used for sensitive Internet traffic, it is still
+              used in many internal networks (like companies and banks)
+              because of legacy systems that cannot handle encryption. </p>
+            <p> Tools such as <a
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#tcpdump">tcpdump</a>
+              and <a class="http"
+                href="http://en.wikipedia.org/wiki/Wireshark">Wireshark</a>
+              are both very powerful, freely available sniffing programs
+              and are available for most computer platforms in use
+              today. For more information, please see their manpages or
+              online documentation. </p>
+            <p> <span class="anchor" id="replay"></span> </p>
+            <p> <span class="anchor" id="dreplay"> </span></p>
+            <h3>Replay Attacks</h3>
+            <p> Replay attacks can be more damaging and successful than
+              mere eavesdropping because they can cause remote actions
+              -- sometimes even against cryptography. </p>
+            <p> The basic idea of a replay attack is to capture packets
+              sent on a wire between two hosts with the intent to later
+              to replay the payloads (or more rarely the same packets)
+              in order to effect the same result. For example, most web
+              based CGIs are extremely susceptible to primitive replay
+              attacks because they are stateless and respond to a single
+              web request with the appropriate information in the
+              request. This request is usually built up over several
+              page requests, but can often be triggered by submitting a
+              full request at once. </p>
+            <p> Imagine an online greeting card application that has
+              several steps, all managed by the same CGI application,
+              with all input saved in the background (traditionally done
+              with hidden form fields): </p>
+            <ol type="1">
+              <li>
+                <p> The first page takes your login name and password:
+                  (user: <em>rms</em>, password: <em>gnu</em>) </p>
+              </li>
+              <li>
+                <p> The second page takes the address of the recipient:
+                  <em> <a class="mailto"
+href="mailto:file.php?file=/share/shared/Maninthemiddleattack-UCLA/esr@catb.org">esr@catb.org</a>
+                  </em> </p>
+              </li>
+              <li>
+                <p> The third page selects an image: <em>h2obuffalo.jpg</em>
+                </p>
+              </li>
+              <li>
+                <p> The fourth page provides an entry form for the
+                  message: <em>Happy Hacking!</em> </p>
+              </li>
+              <li>The fifth page previews and submits and sends the
+                card. </li>
+            </ol>
+            <p> This process would normally take 5 steps by a human,
+              with the possibility of going backwards and forwards to
+              edit form fields. However, the whole process can often be
+              summed up in one HTTP request like this: </p>
+            <p> </p>
+            <pre>http://example.com/card.cgi?login=rms&amp;pass=gnu&amp;addr=esr@catb.org&amp;img=h20buffalo.jpg&amp;msg="Happy Hacking!"&amp;submit=submit
+
+
+</pre>
+            <p> Loading that single URL will skip the whole process and
+              directly send the above card. This is a simple example of
+              the "payload" type of replay attack, where the commands
+              included in a network stream are reissued to a server. </p>
+            <p> While this URL could be sniffed and entered manually,
+              one can imagine capturing the entire stream of packets
+              (including the TCP handhshake) that generated the single
+              HTTP request that resulted in sending the card. After the
+              capture, we might simply re-inject the packets into the
+              network. While this seems like it should work, TCP and
+              other protocols use sequence numbers are are chosen
+              pseudorandomly upon connection initiation. Without valid
+              sequence numbers, a naive "replay" of packets into the
+              network will be rejected by the server. This is why
+              "payload" replay attacks are popular, and incidentally
+              highlights one reason why unpredictable numbers are
+              critically important in security. </p>
+            <p> On the other hand, some protocols, such as UDP, do not
+              necessarily use sequence numbers -- in this case, a direct
+              replay attack of a data stream could be successfully
+              processed by a server. One can imagine replaying a network
+              capture back onto the network, ignoring any response from
+              the server or replaying the appropriate packets if
+              necessary. If done properly, it would look as though those
+              packets simply "appeared" in the network, and because
+              their headers would already contain the information from
+              the <em>original sender</em>, the traffic would appear as
+              though it were coming <em>from</em> the original sender,
+              not the host executing the replay attack. Regardless, the
+              result is the same -- using commands that are known to be
+              valid to achieve the same result without authentication. </p>
+            <p> Regardless of whether you are using "direct" packet
+              replay attacks or more complicated "payload" replay
+              attacks, they can be used for many purposes; one can
+              easily imagine a web or other network conversation giving
+              a user a raise or increasing or decreasing a balance of
+              some kind, from something mostly harmless (like World of
+              Warcraft hitpoints) or something more significant, like an
+              airplane ticket purchase. If that conversation can be
+              replayed, the same effect can be obtained repeatedly. </p>
+            <p> "Direct" Replay attacks work when there is nothing <em>unique</em>
+              about particular transactions other than the request
+              parameters or data payload. The main defense against such
+              an attack are unpredictable (but easily validated) session
+              tokens in the communication that ties a sequence of
+              packets to a unique request. It is not enough to use the
+              current time or a hash of the packet data, because this
+              can easily be guessed or recalculated in a replay attempt.
+            </p>
+            <p> Good session tokens are a form of the <a class="http"
+                href="http://en.wikipedia.org/wiki/Cryptographic_nonce">cryptographic
+
+
+
+
+
+
+                nonce</a>. Ultimately, <a class="http"
+                href="http://www.freesoft.org/CIE/Course/Section4/9.htm">TCP
+
+
+
+
+
+
+                sequence numbers</a> are a kind of nonce -- they prevent
+              the same data from being used in the future to achieve the
+              same results. </p>
+            <p> The concept of nonces and packet sequence numbers is
+              often applied to<a class="http"
+                href="http://en.wikipedia.org/wiki/Remote_procedure_call">RPC
+
+
+
+
+
+
+                transactions</a> in order to make individual
+              transactions unique regardless of the underlying network
+              characteristics. </p>
+            <p> For example, suppose we added a nonce field to our
+              e-card application: </p>
+            <p> </p>
+            <pre>http://example.com/card.cgi?nonce=aksdjf2fk&amp;login=rms&amp;pass=gnu&amp;addr=esr@catb.org&amp;img=h20buffalo.jpg&amp;msg="Happy Hacking!"&amp;submit=submit
+
+
+</pre>
+            <p> The field <tt>nonce</tt> consists of a random string of
+              enough length so as to be unguessable which is assigned by
+              the server when the session was first initiated. The nonce
+              would no longer be valid after a certain amount of time,
+              or after the card was successfully sent. In this way, a
+              replay of this stream would include the invalid (already
+              used) nonce "aksdjf2fk", which would be flagged as invalid
+              by the e-card server and summarily rejected. (A request
+              without a nonce would be rejected outright.) </p>
+            <p> It is also very important to understand that encryption
+              alone does not protect against replay attacks unless there
+              is some kind of nonce or other secret (e.g. session id)
+              within the encrypted packets. For example,with encryption,
+              the original e-card URL could have looked like: </p>
+            <p> </p>
+            <pre>http://example.com/cryptocard.cgi?session=lkadjf092lfkj2f0-20f2p2fusldkjf0294u8rklj;sdf8-908lkdjsf92344f
+
+</pre>
+            <p> ... where
+              "lkadjf092lfkj2f0-20f2p2fusldkjf0294u8rklj;sdf8-908lkdjsf92344f"
+              represents some kind of ciphered session state <em>without</em>
+              a nonce. There is no reason why <em>this</em>
+              conversation couldn't be replayed with the same success as
+              the original session, resulting in a second card being
+              sent. </p>
+            <p> There are many tools that are capable of capturing and
+              replaying traffic. For the purposes of this course, we'll
+              use <a
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#tcpdump">tcpdump</a>
+              for capturing, with <a
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#chaosreader">chaosreader</a>
+              to extract packet payload data. </p>
+            <p> <span class="anchor" id="insertion"></span> </p>
+            <p> <span class="anchor" id="dinsertion"> </span></p>
+            <h3>Insertion Attacks</h3>
+            <p> Insertion Attacks are essentially replay attacks where
+              an attacker changes existing or inserts new data in the
+              network conversation. For example, in the e-card example,
+              an insertion attack could have changed the message in the
+              replayed card from "Happy Hacking" to "Drop Dead!"
+              (although that wouldn't be very nice). Furthermore, this
+              is a less impressive kind of insertion attack because it
+              relies on the first e-card being sent before the modified
+              message could be replayed. </p>
+            <p> In fact, typically, an "insertion attack" means that the
+              attacker has the ability to capture, modify, and resend
+              valid packets <em>as though they were the original data
+                stream</em>. At the very least, this involves capturing
+              the packet, editing, updating any relevant header
+              information (especially the data payload checksum), and
+              resending the modified packet. </p>
+            <p> This is a "man in the middle" attack in the sense that
+              it requires an entity on the network that has the
+              capability to block transmission of the original packets
+              and send the modified packets. (We usually imagine this
+              entity directly between two communicating parties, but
+              that need not physically be true.) Sophisticated insertion
+              attacks can even modify the responses in order to make the
+              original host think everything has gone according to plan.
+            </p>
+            <div class="infobox">
+              <p> Sometimes people use "man in the middle" loosely to
+                refer to any kind of network attack. However, the
+                canonical Man in the Middle attack refers to a specific
+                kind of attack against cryptosystems. We'll discuss this
+                in detail in the next section. </p>
+            </div>
+            <p> One extreme way of doing this is to insert a computer in
+              the middle of the network that acts as a gatekeeper and is
+              capable of modifying traffic. In this sense, an
+              application proxy performs beneficial "insertion attacks"
+              on a network. For example, a web proxy can exchange all
+              graphics for locally cached copies if they exist. In fact,
+              this is one technique that many "<a class="http"
+                href="http://en.wikipedia.org/wiki/Web_accelerator">web
+                accelerators</a>" use -- they replace images and other
+              content with compressed versions, or in the case of
+              images, lower quality lossy-compressed versions. </p>
+            <p> A more stealthy way of performing insertion attacks is
+              using ARP Spoofing as described above to convince hosts to
+              send their data to the attacker <em>first</em>, who will
+              then typically forward the data on after modifying it.
+              This doesn't require modifying the physical nature of the
+              network in any way, and can often be performed undetected
+              from anywhere (even across the Internet) as long as the
+              attacker can directly control an interface on the LAN
+              (e.g. after exploiting a software vulnerability to take
+              over a host). </p>
+            <p> Encryption can obviously hinder the opportunities for
+              successful insertion attacks, but poor use of encryption
+              can still leave open the opportunity to decrypt the
+              packet, change it, and reencrypt the packet before
+              resending. This is especially true if a cryptographic
+              nonce or other kind of session token can be reverse
+              engineered -- if a correct nonce can be generated or
+              recalculated (like a TCP checksum) the nonce has lost its
+              usefulness. </p>
+            <p> In this lab, we will use <a
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#ettercap">Ettercap's</a>
+              extensive filtering capabilities for insertion attacks. <span
+                class="anchor" id="dmitmvenc"> </span></p>
+            <h3>MITM vs. Encryption</h3>
+            <p> While all the above kinds of attacks require a malicious
+              user to have special access to the network, the canonical
+              MITM attack refers to an attack against the key exchange
+              portion of a cryptosystem (which may otherwise be
+              resistant to cryptanalysis). In the canonical MITM attack,
+              a user intercepts the keys as they are exchanged, and then
+              inserts new keys. By doing this, the attacker can encrypt
+              and decrypt all messages, and the communicating parties
+              are none the wiser. </p>
+            <div class="infobox">
+              <p> While this isn't an MITM attack, insertion attacks
+                have sometimes been used to downgrade a connection from
+                a more secure protocol to a less secure protocol by
+                tricking the parties into thinking that one or more
+                clients can only support a less secure protocol. Imagine
+                if you could make SSH simply downgrade to TELNET by
+                claiming that the client can't perform encryption! </p>
+            </div>
+            <p> <span class="anchor" id="dpki"> </span></p>
+            <h4>Public Key Cryptography</h4>
+            <p> While this is not a lab on public key cryptography, the
+              basic idea of public key cryptography is that each host or
+              service has two mathematically related keys. One key (the
+              public key) is used to encrypt data and is public, is
+              registered to a single user or organization, and is widely
+              and freely distributed. The the other key (the private
+              key) is used to decrypt data and is known only to the
+              recipient. Because the private key remains <em>private</em>,
+              a file encrypted with a user's public key can only be
+              decrypted by the user holding the private key. If two
+              parties have each others' public keys, they can encrypt a
+              conversation using the public keys, and decrypt that
+              conversation with the private keys that they each hold. </p>
+            <p> This is all cryptographically sound, <em>as long as the
+                key exchange is performed in a secure manner</em>. But,
+              aye, there's the rub: how do you exchange keys securely
+              over an insecure medium open to <strong>insertion attacks</strong>?
+              Unfortunately, there are few good answers, and none in
+              wide use. </p>
+            <p> <span class="anchor" id="dmitm"> </span></p>
+            <h4>The Man In The Middle Attack</h4>
+            <p> The man in the middle attack works like this: </p>
+            <p> Alice and Bob want encrypt their chat session, but
+              neither Alice nor Bob have each others' public keys. In
+              order to communicate securely, Bob and Alice need to send
+              their public keys (bob.pub and alice.pub) to one another.
+              Once both hosts have each others' public keys, they can
+              begin encrypting their packets, secure in the knowledge
+              that only the intended recipient can decrypt the data. </p>
+            <p> However, imagine there is a user in the middle of the
+              network, known as Eve. Eve wants to listen in on the
+              conversation between Alice and Bob. In order to do this,
+              Eve runs an application that accepts the real public keys
+              alice.pub and bob.pub from Alice and Bob, but sends them
+              both different <em>bogus</em> public keys, <em>bob1.pub</em>
+              and <em>alice1.pub</em>. Bob and Alice don't know any
+              better and will use the bogus public keys instead of the
+              real public keys to encrypt packets for each other. Both
+              Alice and Bob believe that they are using the correct
+              public keys, and expect to decrypt the messages with their
+              own private keys. How can they use their original private
+              keys to decrypt these bogus messages? </p>
+            <p> The answer is that Eve (as the "Man" in the Middle)
+              captures and decrypts the packets with the private keys
+              for the bogus bob1.pub and alice1.pub, inserts or merely
+              eavesdrops on the connection, and reencrypts the data with
+              the <em>original</em> public keys that Alice and Bob sent
+              (alice.pub and bob.pub) and forwards the packets to their
+              original destination. Bob and Alice decrypt the packets
+              with their own private keys, and so don't realize that
+              their connection has been hijacked because from their
+              perspective, the session behaved <b>perfectly</b>. </p>
+            <p> Modern implementations of public key cryptography for
+              network services rely on several different secure key
+              exchange methods. By default, SSH will pass the public key
+              to the client the first time in cleartext. During this
+              first key exchange, the connection is vulnerable to a MITM
+              attack, and if this is a serious concern, the key should
+              be installed by hand from trusted media or encrypted with
+              preexisting trusted keys before being sent over an
+              insecure network. </p>
+            <p> After the initial key exchange, the public key is saved
+              and associated with the IP address in the ssh
+              configuration file~/.ssh/known_hosts (or the Windows
+              Registry if using PuTTY), so that if a different key is
+              sent by a man in the middle (see the discussion of HTTPS
+              below) or even if it is legitimately changed on the remote
+              host it will be noticed and an alert will be generated.
+              Compromise happens either by intercepting the initial
+              exchange or by tricking a user into accepting an
+              illegitimately changed key. </p>
+            <p> "Tricking the user" is easier than you might think,
+              because due to configuration issues, sooner or later most
+              users of ssh will encounter an unexpected key change. This
+              is usually not a security issue and functionally speaking,
+              the "right" thing to do is usually to ignore the warning
+              and accept the new certificate. It is usually worth a
+              little investigation, but most of the time the key change
+              is either expected (e.g., server upgrade) or understood
+              (e.g., erased known_hosts file). Sometimes a user can't be
+              sure why the key has changed, but might be able to
+              consider several plausible explanations that encourage
+              them to accept the key without being <em>certain</em>
+              what is happening. For better or worse, in the vast
+              majority of common cases the user ends up correctly
+              ignoring the warning, sometimes even facilitating the
+              process by deleting an old key locally. This conditioning
+              makes an attacker's job easier, because users have learned
+              that key issues do not usually signal an attack. </p>
+            <p> Secure HTTP (HTTPS) uses a different strategy. Instead
+              of hoping that the first transmission was secure or
+              requiring the users to perform some out-of-band transfer,
+              HTTPS key validation relies on "<a class="http"
+                href="http://en.wikipedia.org/wiki/Trusted_third_party">trusted
+
+
+
+
+
+
+                third party</a>" verification of public key
+              certificates. This means that if you run a web server and
+              you want to ensure visitors that the keys used by your
+              website really belong to you, you buy a certificate from a
+              trusted third party such as VeriSign or Thawte. This
+              certificate lists the host, IP address, name, and other
+              identifying information. When a user attempts to open a
+              new SSL connection to your server, your browser will
+              inspect the certificate to make sure that it is certified
+              by a trusted party (by checking it against a list of
+              parties that it is configured to trust) and that its
+              identification lines up with the server on which it is
+              being used. If it doesn't, the browser will complain and
+              ask you whether to accept the certificate. </p>
+            <p> Unfortunately, while SSH's error message for key
+              mismatch is loud and frightening ("<strong>IT IS POSSIBLE
+                THAT SOMEONE IS DOING SOMETHING NASTY!</strong>"), most
+              web browsers key alert messages are apologetic and
+              deferential by comparison. Most users simply accept the
+              questionable key which may or may not be malicious. This
+              may be related to the fact that signed web certificates
+              are expensive and many non-commercial websites choose to
+              use self-signed certificates instead of paying for
+              third-party verification. Another common problem is the
+              fact that an SSL certificates can be invalidated by <em>accident</em>
+              fairly easily (changing an IP address for example) and
+              expire over time, or can be correct but lack the
+              third-party endorsement. This "mostly correct" scenario <em>feels</em>
+              more secure than one that is flagrantly wrong (e.g., one
+              that says it's for "youarehacked.com" instead of
+              "bankofamerica.com"), but it is <em>trivial</em> to
+              create a certificate that has all the correct information
+              (except the third party signature) yet is still totally
+              bogus. What's worse, ARP Poisoning attacks can be used to
+              intercept and modify the network transactions required to
+              validate certificates, making forgeries appear authentic
+              to the user and the computer. </p>
+            <p> Typical MITM attacks against cryptography <strong>rely</strong>
+              on the attacker's <em>unexpected</em> ability to be
+              interposed in the network and the haste and trust that
+              most users have when dealing with computers. Furthermore,
+              most users are not even <em>remotely aware</em> how
+              likely this kind of attack might be performed and normally
+              approve whatever is necessary to keep doing what they were
+              doing, even if that undermines security. When an attacker
+              is performing a MITM attack against a server with a
+              legitimate SSL certificate, the end user usually only
+              notices that there is "some kind of error" and they just
+              click OK. </p>
+            <p> We will perform this kind of attack using <a
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#ettercap">Ettercap</a>.
+              <span class="anchor" id="tools"> </span></p>
+            <h3>Software Tools</h3>
+            <p> <span class="anchor" id="tcpdump"> </span></p>
+            <h4>tcpdump: sniff and analyze network traffic</h4>
+            <p> <a class="http" href="http://www.tcpdump.org/">tcpdump</a>
+              is the <em>de facto</em> network <a class="http"
+                href="http://en.wikipedia.org/wiki/Packet_sniffer">packet
+
+
+
+
+
+
+                sniffer</a> for most operating systems including many
+              commercial unices, free Unix-likes, Apple's OS X, and even
+              Microsoft Windows. Originally written at Lawrence Berkeley
+              Laboratory (LBL), <tt>tcpdump</tt> is most frequently
+              used for debugging networks and network applications
+              because it gives a simple but comprehensive look into the
+              traffic on an interface and requires no GUI. </p>
+            <p> It is quite common for a network segment to carry the
+              traffic of many hosts. However, network cards typically
+              only process network frames that are destined for their
+              host. This means that network applications can normally
+              only view the traffic addressed to that host, even though
+              most of the time there is traffic belonging to other hosts
+              on the same wire. If you are testing the behavior of a
+              network application sending or receiving data to your
+              host, this is appropriate. </p>
+            <p> However, Ethernet interfaces can be put into so-called
+              promiscuous mode, where the network card passes <em>all</em>
+              network data on the segment to the CPU and subsequently
+              applications can see all network traffic on the interface.
+              If a user wishes to sniff the network for more than their
+              own traffic, the interface must be put into promiscuous
+              mode, either by the application or by a network
+              configuration utility (such as <a
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#ifconfig">ifconfig</a>
+              on Linux). </p>
+            <p> <tt>tcpdump</tt> has various filtering and display
+              options that you can investigate yourself, but the command
+              you will probably find most useful for the course is: </p>
+            <p> </p>
+            <pre>$ sudo tcpdump -i ethN -s 1500 -X
+</pre>
+            <p> This invokes <tt>tcpdump</tt> listening on ethernet
+              adapter N, with a snaplength of 1500 bytes; using a
+              smaller snaplen will not always show all the packet data
+              (especially for large packets). The option -X decodes the
+              data in hex and ASCII, similar to the display of hex
+              editors like <tt>hexdump</tt>. </p>
+            <p> <tt>tcpdump</tt> will stream all decoded information to
+              the terminal, too quickly to read. You can use Control-C
+              to kill <tt>tcpdump</tt> after enough time has passed and
+              use your terminal's scrollbars to look at the output, use
+              <tt>less</tt>, or use a terminal manager like <tt>screen</tt>
+              for its scrollback features. </p>
+            <p> You can also dump the capture to a special binary
+              capture format with the <tt>-w</tt> switch: </p>
+            <p> </p>
+            <pre>$ tcpdump -i eth1 -s0 -w output.pcap
+</pre>
+            <p> The capture file is used with a utility like <a
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#chaosreader">chaosreader</a>.
+            </p>
+            <p> You can also output to a text file (not a binary capture
+              file) <em>and</em> the terminal simultaneously using the
+              Unix utility <tt>tee</tt> like this: </p>
+            <p> </p>
+            <pre>$ tcpdump -i ethN -s 1500 -X | tee output.log
+17:15:00.290656 IP laptop.local.39221 &gt; server.somehost.net.ssh: . ack 2272 win 5002 &lt;nop,nop,timestamp 327689043 282363814&gt;
+
+       0x0000:  4510 0034 e811 4000 4006 d56b 0a0a 0a58  E..4..@.@..k...X
+       0x0010:  4051 2884 9935 0016 6f1c 67f9 7ce3 83e5  @Q(..5..o.g.|...
+       0x0020:  8010 138a a57c 0000 0101 080a 1388 2353  .....|........#S
+       0x0030:  10d4 87a6
+</pre>
+            <p> This output shows a packet en route from the host
+              "laptop" from port 39221 to a server's ssh port (22).
+              Following the header line is the decoded payload. It
+              should be noted that tcpdump does not analyze the packet
+              payload in order to determine the protocols shown in the
+              header; it merely checks the port. </p>
+            <p> <tt>tcpdump</tt> also has powerful header filtering
+              options and its own filter syntax that you can read about
+              online or in the <tt>tcpdump</tt> manpage. But here's a
+              simple example, showing only traffic to or from a specific
+              host: </p>
+            <p> <tt>$&nbsp;tcpdump&nbsp;-i&nbsp;ethN&nbsp;-s&nbsp;1500&nbsp;-X&nbsp;host&nbsp;10.10.10.10&nbsp;|&nbsp;tee&nbsp;output.log</tt>
+            </p>
+            <p> Or a specific port instead (telnet traffic only): </p>
+            <p> <tt>$&nbsp;tcpdump&nbsp;-i&nbsp;ethN&nbsp;-s&nbsp;1500&nbsp;-X&nbsp;port&nbsp;23&nbsp;|&nbsp;tee&nbsp;output.log</tt>
+            </p>
+            <p> These filtering terms can be more expressive with the
+              use of the Boolean operators AND, OR, NOT, etc. Please see
+              the manpage or other online resources for more
+              information. </p>
+            <p> Finally, if ARP spoofing has been set up (e.g. with
+              ettercap), <tt>tcpdump</tt> is able to copy <em>all</em>
+              the traffic sent across this interface (except decrypted
+              SSL traffic -- see below). </p>
+            <div class="infobox">
+              <p> <a class="http"
+                  href="http://en.wikipedia.org/wiki/Wireshark">Wireshark</a>
+                (formerly Ethereal) is essentially a very nice graphical
+                application built top of tcpdump's capabilities (using
+                libpcap, the tcpdump library). If you are capturing
+                packets in a graphical environment, Wireshark is highly
+                recommended. </p>
+            </div>
+            <span class="anchor" id="chaosreader"></span>
+            <h4>chaosreader: inspect and analyze tcpdump captures</h4>
+            <p> chaosreader is an application that extracts TCP
+              connections, names, passwords, files, etc. from inside
+              network traffic logs as captured by <a class="http"
+href="https://www.isi.deterlab.net/file.php?file=/share/shared/Maninthemiddleattack-UCLA/index.html#tcpdump">tcpdump</a>.
+              If you're curious how <tt>chaosreader</tt> works, edit
+              the program with your favorite editor -- it's just a Perl
+              script. </p>
+            <p> The easiest way to use <tt>chaosreader</tt> is to
+              create a capture file with <tt>tcpdump</tt> and the <tt>-w</tt>
+              option, and then feed that capture file into <tt>chaosreader</tt>
+              with this command: </p>
+            <p> </p>
+            <pre>$ chaosreader output.pcap
+</pre>
+            <p> This will create a set of HTML pages with all the
+              relevant data in them. After running chaosreader, copy the
+              files to your home computer (using <tt>scp&nbsp;-r</tt>)
+              or use the text-only web browser elinks to navigate
+              through the pages to find the information you want. </p>
+            <p> <span class="anchor" id="ettercap"></span> </p>
+            <p> </p>
+            <h4>ettercap: play god on a switched network</h4>
+            <p> <a class="http"
+                href="http://en.wikipedia.org/wiki/Ettercap_%28computing%29">Ettercap</a>
+              is a powerful tool for network analysis and security
+              cracking. Ettercap has two main strengths: </p>
+            <p> First, Ettercap is capable of performing <a
+                class="http"
+                href="http://en.wikipedia.org/wiki/Man-in-the-middle_attack">man-in-the-middle</a>
+              attacks on many protocols, including SSH1 and HTTPS.
+              Ettercap is capable of "filtering" packets, where it
+              intercepts, changes, and resends packets on the fly. This
+              could be as simple as changing all occurances of the word
+              "buy" to "sell" in all web traffic, or as complex as
+              exchanging the encryption keys in a secure transmission. </p>
+            <p> Secondly, Ettercap is capable of fully automating ARP
+              spoofing (also known as ARP poisoning) which is a
+              technique whereby a computer on a switched network is
+              capable of forcing other hosts to send their data to the
+              attacker rather than the actual network gateway or
+              destination. This allows an attacker to force arbitrary
+              users to send their data to him first -- after which he
+              can choose to send the traffic on, change it, or throw it
+              away -- all without any privileged position on the network
+              other than the complete control of one workstation. </p>
+            <p> By the inclusion of ARP spoofing, expressive filters,
+              and man-in-the-middle attacks, Ettercap is a one-stop-shop
+              for many network attacks. Where such attacks used to
+              require specialized software development (often customized
+              for a particular network or attack), Ettercap is a
+              user-friendly tool that makes network attacks incredibly
+              simple. </p>
+            <p> <span class="anchor" id="etterstart"> </span></p>
+            <h5>Getting Started</h5>
+            <p> To get started with Ettercap: </p>
+            <ol type="1">
+              <li>
+                <p>Execute <tt>ifconfig</tt> and identify the interface
+                  on the <tt>10.x.x.x</tt> network. For example, it
+                  might be <tt>eth0</tt> or <tt>eth5</tt>. This
+                  interface may change from swap-in to swap-in so you
+                  must perform this step every time you swap in. </p>
+              </li>
+              <li>
+                <p>Become root by executing <tt>sudo su -</tt>. In our
+                  experiment, <b>Ettercap must be run as root</b> in
+                  order to function properly. </p>
+              </li>
+              <li>
+                <p>Start ettercap with <tt>ettercap -C -i ethN</tt>
+                  (where <tt>ethN</tt> is the interface from the <tt>ifconfig</tt>
+                  step). This starts Ettercap with the basic ncurses
+                  terminal interface. </p>
+              </li>
+              <li>
+                <p> Choose "Unified Sniffing" from the <strong>Sniff</strong>
+                  menu. </p>
+              </li>
+              <li>
+                <p> find the hosts on the network <strong>(Hosts</strong>
+                  menu) </p>
+              </li>
+              <li>select targets (Add hosts to a target by highlighting
+                them and pressing 1 in the Hosts list.) </li>
+              <li>
+                <p> spoof their ARP tables (Under <strong>MITM</strong>
+                  menu) </p>
+              </li>
+              <li>
+                <p> and begin sniffing the network. (Under <strong>Start</strong>
+                  menu) </p>
+              </li>
+              <li>
+                <p> While sniffing the network, you can use <tt>tcpdump</tt>
+                  as described above to log the sniffed traffic. </p>
+              </li>
+            </ol>
+            <p> </p>
+            <div class="warning">
+              <p> 
+<strong>Ettercap is Experimental Software!</strong> Ettercap is not a
+                commercial product and will occasionally crash. This is
+                typically due to a segmentation fault -- not <i>your</i>
+                fault. Other times, things that should work, might not.
+                If you have problems with ettercap not working properly,
+                try rebooting <tt>eve</tt> using <tt>sudo reboot</tt>.
+                Only in the worst case should you need to fully swap the
+                experiment out and back in again. </p>
+            </div>
+            <span class="anchor" id="ettermitm">
+              <h5>SSL Attacks</h5>
+              Part of this lab includes performing MITM attacks against
+              SSL encryption. To perform SSL decryption, you will need
+              to modify <tt>ettercap</tt>'s configuration file, which
+              is located in <tt>/usr/local/etc/etter.conf</tt>.
+              <div class="warning">
+                <p> 
+<strong>Logging
+                    with SSL Attacks:</strong> <tt>tcpdump</tt> doesn't
+                  work to log SSL MITM attacks, because the decrypted
+                  data never passes through <tt>eve</tt>'s network
+                  device. (Think about why.) Just use copy and paste
+                  from your terminal (View | Connections in <tt>ettercap</tt>)
+                  to log decrypted traffic. </p>
+              </div>
+              <p> While Ettercap is basically "point and click," part of
+                the this lab is learning and experimenting with these
+                tools, so feel free to poke around and look at other
+                resources. The beauty of doing this on a testbed is that
+                you really can't break anything. </p>
+              <p> <span class="anchor" id="ettertips"> </span></p>
+              <h5>Interface Tips:</h5>
+              <ul>
+                <li>Use 'Tab' and the arrow keys to change the
+                  window/menu you are interacting with. </li>
+                <li>Use 'Control-Q' to close any active window in the
+                  Ettercap interface. </li>
+                <li>There is more traffic than what you see in the "User
+                  Messages" window. Try looking under View | Connections
+                  and selecting a connection to view. </li>
+                <li>To quit, press Control-X. This will "un-poison" the
+                  network and close. </li>
+              </ul>
+              <p> </p>
+              <p> Example Ettercap screen: </p>
+              <p> </p>
+              <pre>Start  Targets  Hosts  View  Mitm  Filters  Logging  Plugins  Help    NG-0.7.3
+┌──Hosts list...─────────────────────────────────────────────────────────────┐
+│                                                                            │
+│ 10.10.10.10      00:13:D4:04:44:CA                                         │
+│ 10.10.10.11      00:14:6C:3B:F3:9D                                         │
+│ 10.10.10.99      00:08:74:12:19:22                                         │
+│                                                                            │
+│                                                                            │
+│                                                                            │
+│                                                                            │
+│                                                                            │
+│                                                                            │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌──User messages:──────────────────────────────────────────────────────────────┐
+│1698 tcp OS fingerprint                                                       ▒
+│2183 known services                                                           ▒
+│Randomizing 255 hosts for scanning...                                         ▒
+│Scanning the whole netmask for 255 hosts...                                   ▒
+│3 hosts added to the hosts list...                                            ▒
+│                                                                              ◆
+└──────────────────────────────────────────────────────────────────────────────┘
+</pre>
+              <p> <span class="anchor" id="etterfilters"> </span></p>
+              <h5>Ettercap Filters</h5>
+              <p> Filters in Ettercap are tiny programs compiled by <tt>etterfilter</tt>,
+                which are then interpreted by the Ettercap filter
+                interpreter when loaded. The syntax is vaguely PHP-like
+                so it is easy to use, but the debugging messages from <tt>etterfilter</tt>
+                can be cryptic. You should <strong>avoid</strong> using
+                the more complete regex filter functions, because their
+                behavior is somewhat unpredicatble. Instead, use
+                replace() and other simpler functions. </p>
+              <p> Many students get confused when they do not see their
+                filters being applied the way they expect them to. For
+                example, students will set up a filter, tunnel in using
+                <tt>ssh</tt>, and view the web page from their desktop
+                computer. However, they won't see the changes from the
+                filter. Why is that? This happens because when you
+                tunnel into DETER, you are tunneling through <tt>users.deterlab.net</tt>
+                <em>to</em> <tt>eve</tt>. And the network that <tt>users</tt>
+                shares with <tt>eve</tt> is not the network being
+                poisoned -- at least it shouldn't be -- you're poisoning
+                the network that <tt>alice</tt>, <tt>bob</tt>, and <tt>eve</tt>
+                share. Thus, 'users' (and you at home) do not see the
+                effect of the filter. However, traffic between <tt>alice</tt>
+                and <tt>bob</tt> should be being filtered -- you can
+                see this using <tt>tcpdump</tt>, the connection viewer,
+                or <tt>chaosreader</tt>. </p>
+              <p> For instructions on how to use them, see <tt>man&nbsp;etterfilter</tt>
+                on DETER. There is also a sample ettercap filter in <tt>/root/</tt>
+                on the <tt>eve</tt> host. </p>
+              <p> <span class="anchor" id="etterlinks"> </span></p>
+              <p>
+                <meta http-equiv="content-type" content="text/html;
+                  charset=UTF-8">
+                <span class="anchor" id="ettermitm"> </span></p>
+              <h3>What can go wrong</h3>
+              <p>Specific problems: </p>
+              <ul>
+                <li>Make sure you swap out your nodes when you are done
+                  working.</li>
+                <li>If Ettercap doesn't seem to be working, make sure
+                  you are poisoning the correct interface. You should be
+                  poisoning the 10.x.x.x interface.</li>
+                <li>If Ettercap still won't work, try rebooting your
+                  nodes (you don't have to swap out yet).</li>
+                <li>If it's still not working, try swapping the nodes
+                  out and back in. (Save your work.)</li>
+                <li>Keep your etterfilters simple -- the etterfilter
+                  scripting language can be difficult to work with.</li>
+                <li>Remember that ettercap is experimental software and
+                  will sometimes crash. Don't take it personally.</li>
+              </ul>
+              <p>Other tips: </p>
+              <p> This assignment is left intentionally open-ended --
+                rather than going into great depth about how to use
+                tools like Ettercap, tcpdump, chaosreader, and others,
+                we're leaving it up to <em>you</em> to do the external
+                reading and experimentation required. <br>
+              </p>
+              <p> You should take notes on everything that you do,
+                including taking terminal logs or copying character data
+                from the terminal. In a very real sense, this activity
+                is the opposite of computer forensics, and both require
+                lots of notes in order to ensure repeatability. <b>In a
+                  real Red Team exercise, complete and thorough
+                  documentation is a must. </b></p>
+              <p> A few starting points: </p>
+              <ul>
+                <li>
+                  <p><a class="http"
+href="https://www.sans.org/reading-room/whitepapers/tools/ettercap-primer-1406">SANS
+
+                      Institute Ettercap Tutorial</a> -- this is for an
+                    older version of Ettercap so don't be confused. </p>
+                </li>
+                <li>
+                  <p> <a class="http"
+                      href="http://ettercap.sourceforge.net">Ettercap
+                      Homepage</a> </p>
+                </li>
+                <li>
+                  <p> <a class="http"
+                      href="http://www.irongeek.com/i.php?page=security/ettercapfilter">etterfilter
+
+                      tutorial</a> </p>
+                </li>
+              </ul>
+            </span>
+            <ul>
+            </ul>
+            <p> <span class="anchor" id="glitches"></span> </p>
+            <!-- <span class="anchor" id="extra"></span> 
+<h2>Extra Credit</h2>
+
+This section describes any extra credit assignments, how to do them, what to measure, etc. If there are no extra credit assignments for this exercise remove this section from here and from the TOC.
+
+--><span class="anchor" id="submission"></span></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
