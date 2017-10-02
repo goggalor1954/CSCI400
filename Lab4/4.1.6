@@ -1,0 +1,21 @@
+4.1.6:
+
+
+visudo
+#append to end of the file
+larry   ALL=NOPASSWD: /etc/init.d/apache2 restart
+#control o
+#contron x
+
+
+#larry can now run the command sudo /etc/init.d/apache2 restart
+
+
+# I would rather the following but i can't use larrys password for some reason. Probably related to the 4.1.2 script
+# larry   ALL=(ALL) /etc/init.d/apache2 restart
+
+Short Answer 7
+
+The vunerblity in allowing a user access to initctl restart is that the job instance being restarted will retain it's orignal configuration. In order to enforce the use of the latest configuration it might be better to grant the user access to stop and start rather than restart.
+
+

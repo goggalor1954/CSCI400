@@ -1,0 +1,33 @@
+affter wroking on a clean version of the project and running run.sh I get the following errors
+
+
+Creating user ken
+-m: command not found
+Creating user dmr
+-m: command not found
+Creating user bwk
+-m: command not found
+
+
+chmod: cannot access '/admins/ken': No such file or directory
+chmod: cannot access '/admins/dmr': No such file or directory
+chmod: cannot access '/admins/bwk': No such file or directory
+
+removed \ on line 47 and put content from line 48 on line 47
+
+after after running this script i still get this error
+
+chmod: cannot access '/admins/ken': No such file or directory
+chmod: cannot access '/admins/dmr': No such file or directory
+chmod: cannot access '/admins/bwk': No such file or directory
+
+
+
+I can su into bwk but not to ken or dmr. No password entry.
+
+
+
+
+
+
+

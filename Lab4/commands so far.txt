@@ -52,3 +52,21 @@ echo "9. Change /home dirs permissions"
 chmod 750 /home/larry
 chmod 750 /home/moe
 chmod 750 /home/curly
+
+
+yada yada yada
+
+
+4.1.6
+
+
+visudo
+append to end of text file
+larry   ALL=NOPASSWD: /etc/init.d/apache2 restart
+
+larry can now run the command sudo /etc/init.d/apache2 restart
+.
+
+would rather run this but i can't get larrys password to work.
+larry   ALL=(ALL) /etc/init.d/apache2 restart
+
