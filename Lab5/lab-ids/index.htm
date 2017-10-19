@@ -1,0 +1,479 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html;
+      charset=windows-1252">
+    <title>Cybersecurity Lab - October 4, 2017</title>
+  </head>
+  <body>
+    <h2>Cybersecurity Lab - October 4, 2017<br>
+    </h2>
+    <hr> <b>Intrusion Detection Systems labs(Snort, Bro, honeyd,
+      nessus, nmap)</b>
+    <hr>
+    <h3>Intrusion Detection System</h3>
+    <cite> An Intrusion Detection System (IDS) is a device or software
+      application that monitors network and/or system activities for
+      malicious activities or policy violations and produces reports to
+      a Management Station. -- Wikipedia </cite> <br>
+    <br>
+    <b>Types of IDS</b>
+    <ul>
+      <li>Network intrusion detection system (NIDS)</li>
+      <li>Host-based intrusion detection system (HIDS)</li>
+      <li>Perimeter Intrusion Detection System (PIDS)</li>
+    </ul>
+    <br>
+    <b>Free Intrusion Detection Systems</b>
+    <ul>
+      <li>Bro NIDS</li>
+      <li>OSSEC HIDS</li>
+      <li>Prelude Hybrid IDS</li>
+      <li>honeyd</li>
+      <li>nessus</li>
+      <li>nmap</li>
+      <li>Snort</li>
+      <li>Suricata</li>
+      <li>...</li>
+    </ul>
+    You can find more tools in <a
+href="http://www.dmoz.org/Computers/Security/Intrusion_Detection_Systems/Products_and_Tools/Open_Source/">here</a>.
+    <hr>
+    <h3>Snort</h3>
+    You can get Snort from its <a href="http://www.snort.org/">homepage</a>,
+    and get the user manual from <a
+      href="https://www.snort.org/documents/1">here</a>. In order to use
+    Snort in Windows, you may need to install <a
+      href="http://www.winpcap.org/install/default.htm">WinPcap</a>.<br>
+    <br>
+    Snort has four running modes: Sniffer mode, Packet Logger mode,
+    Network Intrusion Detection System mode, Inline mode. Now we just
+    focus on Network Intrusion Detection System(NIDS) mode. To use NIDS
+    mode, you need a rule file. You can modify the rule file in <cite>./snort/etc</cite>.
+    You also can download the rule package from <a
+      href="https://www.snort.org/downloads/#rule-downloads">here</a>.
+    More details please see the user manual section 1.4.
+    <hr>
+    <h3>Bro Intrusion Detection System</h3>
+    You can get Bro from its <a href="http://www.bro-ids.org/">homepage</a>.
+    You can find user manuals in <a
+      href="https://www.bro.org/documentation/index.html">here</a>. Bro
+    works with Linux and Solaris as well, but the performance is best
+    under FreeBSD. Also, you need install <b>tcpdump</b> and <b>libpcap</b>.
+    You can download them from <a href="http://www.tcpdump.org/">here</a>.
+    <br>
+    <br>
+    More details please see the online user manual.
+    <hr>
+    <h3>Honeyd</h3>
+    You can get Honeyd from its <a href="http://www.honeyd.org/">homepage</a>.
+    To learn how to install and use honeyd, please see the PDF named
+    "honeyd_install.pdf" in the package. <a
+      href="http://www.honeyd.org/configuration.php">Here</a> are some
+    sample configurations.
+    <hr>
+    <h3>Nessus</h3>
+    You can get Nessus from its <a href="http://www.nessus.org/nessus/">homepage</a>.
+    After you downloaded and installed the software, you have to get
+    your registration code in <a
+      href="http://www.nessus.org/plugins/?view=register-info">here</a>(The
+
+
+
+
+    HomeFeed is Free). Next, you need to input the registration code and
+    start updating. When it has been started, you need to add a user
+    account. By now you can use this tools in a browser. Log into <a
+      href="https://localhost:8834/">https://localhost:8834/</a>. <br>
+    You can get some ideas from its <a
+      href="http://www.nessus.org/demos/">video demos</a>.<br>
+    <br>
+    <hr width="100%" size="2">
+    <h3>Setting up an IMAP server on Ubuntu</h3>
+    <br>
+    <meta charset="utf-8">
+    <ol style="margin: 0px 0px 1em 30px; padding: 0px; border: 0px;
+      outline: 0px; font-weight: normal; font-style: normal;
+      font-family: Ubuntu, Arial, &quot;libra sans&quot;, sans-serif;
+      font-size: 15px; list-style: decimal; color: rgb(17, 17, 17);
+      font-variant-ligatures: normal; font-variant-caps: normal;
+      letter-spacing: normal; orphans: 2; text-align: left; text-indent:
+      0px; text-transform: none; white-space: normal; widows: 2;
+      word-spacing: 0px; -webkit-text-stroke-width: 0px;
+      background-color: rgb(244, 244, 244);">
+      <li style="margin: 0px 0px 0.5em; padding: 0px; border: 0px;
+        outline: 0px; font-weight: inherit; font-style: inherit;
+        font-family: inherit; font-size: 15px; display: list-item;
+        list-style-position: outside; list-style-type: inherit;
+        word-wrap: break-word;">
+        <p style="margin: 0px 0px 1em; padding: 0px; border: 0px;
+          outline: 0px; font-weight: inherit; font-style: inherit;
+          font-family: inherit; font-size: 15px; clear: both;">Install
+          the packages</p>
+        <p style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+          font-weight: inherit; font-style: inherit; font-family:
+          inherit; font-size: 15px; clear: both;"><code style="margin:
+            0px; padding: 1px 5px; border: 0px; outline: 0px;
+            font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);"><span style="margin:
+              0px; padding: 0px; border: 0px; outline: 0px; font-weight:
+              inherit; font-style: inherit; font-family: inherit;
+              font-size: 13px;"><span style="margin: 0px; padding: 0px;
+                border: 0px; outline: 0px; font-weight: inherit;
+                font-style: inherit; font-family: inherit; font-size:
+                13px;">sudo</span></span><span
+              class="Apple-converted-space">&nbsp;</span>apt-get install<span
+              class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">dovecot</span></span>-<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">imapd</span></span><span
+              class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">dovecot</span></span>-pop3d</code></p>
+      </li>
+      <li style="margin: 0px 0px 0.5em; padding: 0px; border: 0px;
+        outline: 0px; font-weight: inherit; font-style: inherit;
+        font-family: inherit; font-size: 15px; display: list-item;
+        list-style-position: outside; list-style-type: inherit;
+        word-wrap: break-word;">
+        <p style="margin: 0px 0px 1em; padding: 0px; border: 0px;
+          outline: 0px; font-weight: inherit; font-style: inherit;
+          font-family: inherit; font-size: 15px; clear: both;">Configure
+          the protocol you need to be used by appending the protocol in
+          the file<span class="Apple-converted-space" style="margin:
+            0px; padding: 0px; border: 0px; outline: 0px; font-weight:
+            inherit; font-style: inherit; font-family: inherit;
+            font-size: 15px;">&nbsp;</span><code style="margin: 0px;
+            padding: 1px 5px; border: 0px; outline: 0px; font-weight:
+            inherit; font-style: inherit; font-family: Consolas, Menlo,
+            Monaco, &quot;Lucida Console&quot;, &quot;Liberation
+            Mono&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream
+            Vera Sans Mono&quot;, &quot;Courier New&quot;, monospace,
+            sans-serif; font-size: 13px; background-color: rgb(239, 240,
+            241);">/etc/<span style="margin: 0px; padding: 0px; border:
+              0px; outline: 0px; font-weight: inherit; font-style:
+              inherit; font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">dovecot</span></span>/<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">dovecot</span></span>.<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">conf</span></span></code>:</p>
+        <p style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+          font-weight: inherit; font-style: inherit; font-family:
+          inherit; font-size: 15px; clear: both;"><code style="margin:
+            0px; padding: 1px 5px; border: 0px; outline: 0px;
+            font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);">protocols = pop3
+            pop3s<span class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">imap</span></span><span
+              class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">imaps</span></span></code></p>
+      </li>
+      <li style="margin: 0px 0px 0.5em; padding: 0px; border: 0px;
+        outline: 0px; font-weight: inherit; font-style: inherit;
+        font-family: inherit; font-size: 15px; display: list-item;
+        list-style-position: outside; list-style-type: inherit;
+        word-wrap: break-word;">
+        <p style="margin: 0px 0px 1em; padding: 0px; border: 0px;
+          outline: 0px; font-weight: inherit; font-style: inherit;
+          font-family: inherit; font-size: 15px; clear: both;">Choose
+          the mailbox format you would like to use.<span
+            class="Apple-converted-space">&nbsp;</span><span
+            style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+            font-weight: inherit; font-style: inherit; font-family:
+            inherit; font-size: 15px;"><span style="margin: 0px;
+              padding: 0px; border: 0px; outline: 0px; font-weight:
+              inherit; font-style: inherit; font-family: inherit;
+              font-size: 15px;">Dovecot</span></span><span
+            class="Apple-converted-space">&nbsp;</span>supports<span
+            class="Apple-converted-space" style="margin: 0px; padding:
+            0px; border: 0px; outline: 0px; font-weight: inherit;
+            font-style: inherit; font-family: inherit; font-size: 15px;">&nbsp;</span><code
+            style="margin: 0px; padding: 1px 5px; border: 0px; outline:
+            0px; font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);"><span style="margin:
+              0px; padding: 0px; border: 0px; outline: 0px; font-weight:
+              inherit; font-style: inherit; font-family: inherit;
+              font-size: 13px;"><span style="margin: 0px; padding: 0px;
+                border: 0px; outline: 0px; font-weight: inherit;
+                font-style: inherit; font-family: inherit; font-size:
+                13px;">maildir</span></span></code><span
+            class="Apple-converted-space" style="margin: 0px; padding:
+            0px; border: 0px; outline: 0px; font-weight: inherit;
+            font-style: inherit; font-family: inherit; font-size: 15px;">&nbsp;</span>and<span
+            class="Apple-converted-space" style="margin: 0px; padding:
+            0px; border: 0px; outline: 0px; font-weight: inherit;
+            font-style: inherit; font-family: inherit; font-size: 15px;">&nbsp;</span><code
+            style="margin: 0px; padding: 1px 5px; border: 0px; outline:
+            0px; font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);"><span style="margin:
+              0px; padding: 0px; border: 0px; outline: 0px; font-weight:
+              inherit; font-style: inherit; font-family: inherit;
+              font-size: 13px;"><span style="margin: 0px; padding: 0px;
+                border: 0px; outline: 0px; font-weight: inherit;
+                font-style: inherit; font-family: inherit; font-size:
+                13px;">mbox</span></span></code><span
+            class="Apple-converted-space" style="margin: 0px; padding:
+            0px; border: 0px; outline: 0px; font-weight: inherit;
+            font-style: inherit; font-family: inherit; font-size: 15px;">&nbsp;</span>formats.
+
+
+          Choose <span style="margin: 0px; padding: 0px; border: 0px;
+            outline: 0px; font-weight: inherit; font-style: inherit;
+            font-family: inherit; font-size: 15px;"><span style="margin:
+              0px; padding: 0px; border: 0px; outline: 0px; font-weight:
+              inherit; font-style: inherit; font-family: inherit;
+              font-size: 15px;"><span style="margin: 0px; padding: 0px;
+                border: 0px; outline: 0px; font-weight: normal;
+                font-style: normal; font-family: Consolas, Menlo,
+                Monaco, &quot;Lucida Console&quot;, &quot;Liberation
+                Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+                &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+                New&quot;, monospace, sans-serif; font-size: 13px;
+                color: rgb(17, 17, 17); letter-spacing: normal; orphans:
+                2; text-align: left; text-indent: 0px; text-transform:
+                none; widows: 2; word-spacing: 0px;">mbox</span></span></span>&nbsp;for
+
+
+          simplicity.&nbsp;Edit the file<span
+            class="Apple-converted-space" style="margin: 0px; padding:
+            0px; border: 0px; outline: 0px; font-weight: inherit;
+            font-style: inherit; font-family: inherit; font-size: 15px;">&nbsp;</span><code
+            style="margin: 0px; padding: 1px 5px; border: 0px; outline:
+            0px; font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);">/etc/<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">dovecot</span></span>/<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">dovecot</span></span>.<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">conf</span></span></code><span
+            class="Apple-converted-space" style="margin: 0px; padding:
+            0px; border: 0px; outline: 0px; font-weight: inherit;
+            font-style: inherit; font-family: inherit; font-size: 15px;">&nbsp;</span>and
+
+
+          change the line</p>
+        <p style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+          font-weight: inherit; font-style: inherit; font-family:
+          inherit; font-size: 15px; clear: both;"><code style="margin:
+            0px; padding: 1px 5px; border: 0px; outline: 0px;
+            font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);">mail_location =<span
+              class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">mbox</span></span>:~/mail:INBOX=/var/spool/mail/%u
+
+
+            # (for<span class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">mbox</span></span>)</code></p>
+      </li>
+      <li style="margin: 0px 0px 0.5em; padding: 0px; border: 0px;
+        outline: 0px; font-weight: inherit; font-style: inherit;
+        font-family: inherit; font-size: 15px; display: list-item;
+        list-style-position: outside; list-style-type: inherit;
+        word-wrap: break-word;">
+        <p style="margin: 0px 0px 1em; padding: 0px; border: 0px;
+          outline: 0px; font-weight: inherit; font-style: inherit;
+          font-family: inherit; font-size: 15px; clear: both;">Restart
+          the service</p>
+        <p style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+          font-weight: inherit; font-style: inherit; font-family:
+          inherit; font-size: 15px; clear: both;"><code style="margin:
+            0px; padding: 1px 5px; border: 0px; outline: 0px;
+            font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);"><span style="margin:
+              0px; padding: 0px; border: 0px; outline: 0px; font-weight:
+              inherit; font-style: inherit; font-family: inherit;
+              font-size: 13px;"><span style="margin: 0px; padding: 0px;
+                border: 0px; outline: 0px; font-weight: inherit;
+                font-style: inherit; font-family: inherit; font-size:
+                13px;">sudo</span></span><span
+              class="Apple-converted-space">&nbsp;</span>/etc/<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">init</span></span>.d/<span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">dovecot</span></span><span
+              class="Apple-converted-space">&nbsp;</span>restart</code></p>
+      </li>
+      <li style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+        font-weight: inherit; font-style: inherit; font-family: inherit;
+        font-size: 15px; display: list-item; list-style-position:
+        outside; list-style-type: inherit; word-wrap: break-word;">
+        <p style="margin: 0px 0px 1em; padding: 0px; border: 0px;
+          outline: 0px; font-weight: inherit; font-style: inherit;
+          font-family: inherit; font-size: 15px; clear: both;">Use
+          telnet to check that<span class="Apple-converted-space">&nbsp;</span><span
+            style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+            font-weight: inherit; font-style: inherit; font-family:
+            inherit; font-size: 15px;"><span style="margin: 0px;
+              padding: 0px; border: 0px; outline: 0px; font-weight:
+              inherit; font-style: inherit; font-family: inherit;
+              font-size: 15px;">dovecot</span></span><span
+            class="Apple-converted-space">&nbsp;</span>is working
+          properly.</p>
+        <p style="margin: 0px; padding: 0px; border: 0px; outline: 0px;
+          font-weight: inherit; font-style: inherit; font-family:
+          inherit; font-size: 15px; clear: both;"><code style="margin:
+            0px; padding: 1px 5px; border: 0px; outline: 0px;
+            font-weight: inherit; font-style: inherit; font-family:
+            Consolas, Menlo, Monaco, &quot;Lucida Console&quot;,
+            &quot;Liberation Mono&quot;, &quot;DejaVu Sans Mono&quot;,
+            &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier
+            New&quot;, monospace, sans-serif; font-size: 13px;
+            background-color: rgb(239, 240, 241);">telnet<span
+              class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">localhost</span></span><span
+              class="Apple-converted-space">&nbsp;</span><span
+              style="margin: 0px; padding: 0px; border: 0px; outline:
+              0px; font-weight: inherit; font-style: inherit;
+              font-family: inherit; font-size: 13px;"><span
+                style="margin: 0px; padding: 0px; border: 0px; outline:
+                0px; font-weight: inherit; font-style: inherit;
+                font-family: inherit; font-size: 13px;">imap</span></span></code></p>
+      </li>
+    </ol>
+    <br class="Apple-interchange-newline">
+    <br>
+    <hr>
+    <h3>Tools in this Package</h3>
+    We provide several IDS tools in this package, and you are allowed to
+    download other software or other version from the Internet. Here is
+    the list.
+    <ul>
+      <li><b>Bro</b></li>
+      (FreeBSD)
+      <li><b>honeyd</b></li>
+      (FreeBSD/Linux)
+      <li><b>nessus</b></li>
+      (Windows)
+      <li><b>NMAP</b>(Windows) - Linux/Mac OS X/FreeBSD versions are
+        available on <a href="http://nmap.org/download.html">here</a></li>
+      <li><b>NMapWin</b>(Windows) </li>
+      <li><b>Snort</b></li>
+      (Windows) - Other version are available on <a
+        href="http://www.snort.org/snort-downloads?">here</a>
+    </ul>
+    <hr>
+    <h3>References</h3>
+    <ul>
+      <li><a
+href="http://www.symantec.com/connect/articles/open-source-honeypots-learning-honeyd">Open
+
+
+
+
+          Source Honeypots: Learning with Honeyd</a></li>
+      <li><a href="http://www.nessus.org/">Nessus Homepage</a></li>
+      <li><a
+href="http://ulissesaraujo.wordpress.com/2008/12/08/deploying-honeypots-with-honeyd/">Deploying
+
+
+
+
+          Honeypots with Honeyd</a></li>
+      <li><a href="http://nmap.org">NMAP Homepage</a></li>
+      <li><a href="http://ubuntuforums.org/showthread.php?t=213445">Howto
+
+
+
+
+          setup OSSEC-HIDS on your ubuntu box</a></li>
+    </ul>
+  </body>
+</html>
